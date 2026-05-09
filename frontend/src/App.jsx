@@ -1,22 +1,24 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import JobInputPage from "./pages/JobInputPage";
+import QuestionsReadyPage from "./pages/QuestionsReadyPage";
 
 export default function App() {
-  const [status, setStatus] = useState("checking");
+  const [page, setPage] = useState("job_input");
+  const [sessionData, setSessionData] = useState(null);
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/health`)
-      .then((res) => {
-        if (res.ok) setStatus("connected");
-        else setStatus("unreachable");
-      })
-      .catch(() => setStatus("unreachable"));
-  }, []);
+  function handleSuccess(data) {
+    setSessionData(data);
+    setPage("questions_ready");
+  }
 
-  return (
-    <div>
-      {status === "checking" && <p>Checking backend...</p>}
-      {status === "connected" && <p>Backend connected ✓</p>}
-      {status === "unreachable" && <p>Backend unreachable ✗</p>}
-    </div>
-  );
+  function handleBack() {
+    setPage("job_input");
+    setSessionData(null);
+  }
+
+  if (page === "questions_ready") {
+    return <QuestionsReadyPage sessionData={sessionData} onBack={handleBack} />;
+  }
+
+  return <JobInputPage onSuccess={handleSuccess} />;
 }
