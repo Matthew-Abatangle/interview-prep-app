@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 const PRESET_ROLES = [
   { value: "software-engineering-intern", label: "Software Engineering Intern" },
@@ -27,7 +28,7 @@ function extractCompanyName(jd) {
   return null;
 }
 
-export default function JobInputPage({ onSuccess }) {
+export default function JobInputPage({ onSuccess, onSignOut }) {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [presetRole, setPresetRole] = useState("");
@@ -45,27 +46,53 @@ export default function JobInputPage({ onSuccess }) {
     setLoading(true);
     setError(null);
 
-    const sessionId = crypto.randomUUID();
     const trimmedTitle = jobTitle.trim();
     const trimmedJD = jobDescription.trim();
     const companyName = extractCompanyName(trimmedJD);
 
-    const body = {
-      job_title: trimmedTitle,
-      job_description: trimmedJD,
-      session_id: sessionId,
-    };
-    if (companyName) body.company_name = companyName;
-
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-questions`, {
+      // Get JWT token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const authHeader = { Authorization: `Bearer ${token}` };
+
+      // Step 1: Create session via POST /api/sessions
+      const sessionRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ job_title: trimmedTitle, source: "jd" }),
+      });
+
+      if (sessionRes.status === 429) {
+        setError("You've reached your daily limit of 3 sessions. Come back tomorrow.");
+        setLoading(false);
+        return;
+      }
+
+      if (!sessionRes.ok) {
+        setError("Something went wrong starting your session. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const { session_id } = await sessionRes.json();
+
+      // Step 2: Generate questions
+      const body = {
+        job_title: trimmedTitle,
+        job_description: trimmedJD,
+        session_id,
+      };
+      if (companyName) body.company_name = companyName;
+
+      const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify(body),
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      if (questionsRes.ok) {
+        const data = await questionsRes.json();
         onSuccess({
           session_id: data.session_id,
           questions: data.questions,
@@ -85,11 +112,22 @@ export default function JobInputPage({ onSuccess }) {
     <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
       <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Prepare for Your Interview</h1>
-          <p className="text-gray-400 text-base">
-            Enter your job details to generate personalized behavioral questions.
-          </p>
+        <div className="mb-10 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Prepare for Your Interview</h1>
+            <p className="text-gray-400 text-base">
+              Enter your job details to generate personalized behavioral questions.
+            </p>
+          </div>
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="text-slate-400 hover:text-white text-sm transition-colors duration-150 shrink-0 mt-1"
+            >
+              Sign out
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">

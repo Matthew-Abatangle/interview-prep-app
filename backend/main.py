@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routers.questions import router as questions_router
 from routers.sessions import router as sessions_router
+from middleware.auth import AuthMiddleware
 
 load_dotenv()
 
@@ -18,6 +19,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(AuthMiddleware)
 
 app.include_router(questions_router)
 app.include_router(sessions_router)

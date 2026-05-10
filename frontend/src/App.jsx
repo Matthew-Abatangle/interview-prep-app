@@ -1,24 +1,62 @@
 import { useState } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
 import JobInputPage from "./pages/JobInputPage";
 import QuestionsReadyPage from "./pages/QuestionsReadyPage";
 
-export default function App() {
-  const [page, setPage] = useState("job_input");
+function AppInner() {
+  const { user, loading, signOut } = useAuth();
+  const [page, setPage] = useState("login");
   const [sessionData, setSessionData] = useState(null);
 
-  function handleSuccess(data) {
-    setSessionData(data);
-    setPage("questions_ready");
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
-  function handleBack() {
-    setPage("job_input");
-    setSessionData(null);
+  if (!user) {
+    if (page === "signup") {
+      return <SignUpPage onNavigateToLogin={() => setPage("login")} />;
+    }
+    return <LoginPage onNavigateToSignUp={() => setPage("signup")} />;
   }
 
-  if (page === "questions_ready") {
-    return <QuestionsReadyPage sessionData={sessionData} onBack={handleBack} />;
+  // User is authenticated
+  if (page === "questions_ready" && sessionData) {
+    return (
+      <QuestionsReadyPage
+        sessionData={sessionData}
+        onBack={() => {
+          setSessionData(null);
+          setPage("home");
+        }}
+      />
+    );
   }
 
-  return <JobInputPage onSuccess={handleSuccess} />;
+  return (
+    <JobInputPage
+      onSuccess={(data) => {
+        setSessionData(data);
+        setPage("questions_ready");
+      }}
+      onSignOut={async () => {
+        await signOut();
+        setPage("login");
+        setSessionData(null);
+      }}
+    />
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
+  );
 }

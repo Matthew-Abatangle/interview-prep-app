@@ -1,5 +1,6 @@
 import os
-from fastapi import APIRouter, HTTPException
+from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from supabase import create_client
 
@@ -18,7 +19,6 @@ def get_supabase():
 
 
 class CreateSessionRequest(BaseModel):
-    user_id: str
     job_title: str
     job_description: str | None = None
     company_name: str | None = None
@@ -32,28 +32,55 @@ class CreateSessionResponse(BaseModel):
 
 
 @router.post("/api/sessions", response_model=CreateSessionResponse)
-async def create_session(request: CreateSessionRequest):
+async def create_session(request: Request, body: CreateSessionRequest):
+    # Extract user_id from JWT payload (set by auth middleware)
+    user_id = request.state.user["sub"]
+
     # Validate source
-    if request.source not in ("jd", "preset", "fallback"):
+    if body.source not in ("jd", "preset", "fallback"):
         raise HTTPException(status_code=422, detail="source must be 'jd', 'preset', or 'fallback'")
 
     # Validate feedback_timing
-    if request.feedback_timing not in ("live", "end_only"):
+    if body.feedback_timing not in ("live", "end_only"):
         raise HTTPException(status_code=422, detail="feedback_timing must be 'live' or 'end_only'")
 
     # Validate job_title
-    if not request.job_title or not request.job_title.strip():
+    if not body.job_title or not body.job_title.strip():
         raise HTTPException(status_code=422, detail="job_title is required")
+
+    # Rate limiting: max 3 sessions per user per day (UTC)
+    today_midnight = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ).isoformat()
+
+    try:
+        count_result = (
+            get_supabase()
+            .table("sessions")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .gte("created_at", today_midnight)
+            .execute()
+        )
+        session_count = count_result.count if count_result.count is not None else 0
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to create session. Please try again.")
+
+    if session_count >= 3:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily session limit reached. Maximum 3 sessions per day."
+        )
 
     try:
         result = get_supabase().table("sessions").insert({
-            "user_id": request.user_id,
-            "job_title": request.job_title.strip(),
-            "company_name": request.company_name,
-            "job_description": request.job_description[:3000] if request.job_description else None,
-            "source": request.source,
-            "preset_role": request.preset_role,
-            "feedback_timing": request.feedback_timing,
+            "user_id": user_id,
+            "job_title": body.job_title.strip(),
+            "company_name": body.company_name,
+            "job_description": body.job_description[:3000] if body.job_description else None,
+            "source": body.source,
+            "preset_role": body.preset_role,
+            "feedback_timing": body.feedback_timing,
             "status": "in_progress"
         }).execute()
 
