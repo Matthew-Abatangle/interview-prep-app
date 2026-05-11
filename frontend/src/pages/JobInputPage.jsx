@@ -130,66 +130,74 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Job Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Job Title
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Investment Banking Analyst"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
 
-          {/* JD Path — Primary */}
-          <div className={presetActive ? "opacity-40 pointer-events-none" : ""}>
-            <div className="rounded-xl border border-indigo-500 bg-gray-800 p-6">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-base font-semibold text-white">Paste a Job Description</h2>
-                  <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-medium">
-                    Recommended
-                  </span>
-                </div>
-                {jdNonEmpty && !presetActive && (
-                  <button
-                    type="button"
-                    onClick={() => setJobDescription("")}
-                    className="text-xs text-gray-400 hover:text-white transition-colors duration-150"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <textarea
-                placeholder="Paste the full job description here..."
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                rows={7}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
-                style={{ minHeight: "160px" }}
+          {/* Job Title + JD Path — fades together when preset is active */}
+          <div className={`space-y-8 transition-opacity duration-200 ${presetActive ? "opacity-40 pointer-events-none" : ""}`}>
+
+            {/* Job Title */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Job Title
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Investment Banking Analyst"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-400 mt-2">
-                Questions will be tailored specifically to this role and company.
-              </p>
             </div>
-          </div>
+
+            {/* JD Path — Primary */}
+            <div>
+              <div className="rounded-xl border border-indigo-500 bg-gray-800 p-6">
+                <div className="relative mb-4">
+                  <div className="text-center">
+                    <h2 className="text-base font-semibold text-white">Paste a Job Description</h2>
+                  </div>
+                  <div className="absolute top-0 right-0 flex items-center gap-2">
+                    <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-medium">
+                      Recommended
+                    </span>
+                    {jdNonEmpty && !presetActive && (
+                      <button
+                        type="button"
+                        onClick={() => setJobDescription("")}
+                        className="text-xs text-gray-400 hover:text-white transition-colors duration-150"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <textarea
+                  placeholder="Paste the full job description here..."
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  rows={7}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
+                  style={{ minHeight: "160px" }}
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Questions will be tailored specifically to this role and company.
+                </p>
+              </div>
+            </div>
+
+          </div> {/* end Job Title + JD wrapper */}
 
           {/* Preset Path — Secondary */}
           <div className={jdNonEmpty ? "opacity-40 pointer-events-none" : ""}>
             <div className="rounded-xl border border-gray-700 bg-gray-800 p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div>
+              <div className="relative mb-3">
+                <div className="text-center">
                   <h2 className="text-sm font-medium text-gray-400">Use Preset Questions</h2>
                   <p className="text-xs text-gray-500 mt-1">
                     Choose from a curated set of questions for common roles.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="absolute top-0 right-0 flex items-center gap-2">
                   <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-medium">
                     Coming Soon
                   </span>
