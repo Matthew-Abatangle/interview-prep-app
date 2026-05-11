@@ -3,7 +3,7 @@ export default function QuestionsReadyPage({ sessionData, onBack }) {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl animate-fade-up">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Your Questions Are Ready</h1>

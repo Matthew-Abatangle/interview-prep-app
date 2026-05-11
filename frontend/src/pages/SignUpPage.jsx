@@ -45,7 +45,7 @@ export default function SignUpPage({ onNavigateToLogin }) {
   if (success) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm text-center">
+        <div className="w-full max-w-sm text-center animate-fade-up">
           <h1 className="text-2xl font-bold text-white mb-3">Check your email</h1>
           <p className="text-slate-400 text-sm mb-6">
             Check your email to confirm your account before signing in.
@@ -64,7 +64,7 @@ export default function SignUpPage({ onNavigateToLogin }) {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm animate-fade-up">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white mb-1">Create Account</h1>
           <p className="text-slate-400 text-sm">Get started with your interview prep.</p>

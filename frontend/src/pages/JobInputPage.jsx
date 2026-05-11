@@ -37,6 +37,7 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
 
   const jdActive = jobDescription.replace(/\s/g, "").length >= 50;
   const jdNonEmpty = jobDescription.trim().length > 0;
+  const presetActive = Boolean(presetRole);
   const submitDisabled = !jobTitle.trim() || !jdActive || loading;
 
   async function handleSubmit(e) {
@@ -110,7 +111,7 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl animate-fade-up">
         {/* Header */}
         <div className="relative mb-10 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Prepare for Your Interview</h1>
@@ -145,55 +146,75 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
           </div>
 
           {/* JD Path — Primary */}
-          <div className="rounded-xl border border-indigo-500 bg-gray-800 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="text-base font-semibold text-white">Paste a Job Description</h2>
-              <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-medium">
-                Recommended
-              </span>
+          <div className={presetActive ? "opacity-40 pointer-events-none" : ""}>
+            <div className="rounded-xl border border-indigo-500 bg-gray-800 p-6">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-base font-semibold text-white">Paste a Job Description</h2>
+                  <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-medium">
+                    Recommended
+                  </span>
+                </div>
+                {jdNonEmpty && !presetActive && (
+                  <button
+                    type="button"
+                    onClick={() => setJobDescription("")}
+                    className="text-xs text-gray-400 hover:text-white transition-colors duration-150"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <textarea
+                placeholder="Paste the full job description here..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                rows={7}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
+                style={{ minHeight: "160px" }}
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                Questions will be tailored specifically to this role and company.
+              </p>
             </div>
-            <textarea
-              placeholder="Paste the full job description here..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              rows={7}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
-              style={{ minHeight: "160px" }}
-            />
-            <p className="text-xs text-gray-400 mt-2">
-              Questions will be tailored specifically to this role and company.
-            </p>
           </div>
 
           {/* Preset Path — Secondary */}
-          <div
-            className="rounded-xl border border-gray-700 bg-gray-800 p-6 transition-opacity duration-200"
-            style={{ opacity: jdNonEmpty ? 0.4 : 1 }}
-          >
-            <div className="mb-3">
-              <h2 className="text-sm font-medium text-gray-400">Use Preset Questions</h2>
-              <p className="text-xs text-gray-500 mt-1">
-                Choose from a curated set of questions for common roles.
-              </p>
+          <div className={jdNonEmpty ? "opacity-40 pointer-events-none" : ""}>
+            <div className="rounded-xl border border-gray-700 bg-gray-800 p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="text-sm font-medium text-gray-400">Use Preset Questions</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose from a curated set of questions for common roles.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-medium">
+                    Coming Soon
+                  </span>
+                  {presetActive && !jdNonEmpty && (
+                    <button
+                      type="button"
+                      onClick={() => setPresetRole("")}
+                      className="text-xs text-gray-400 hover:text-white transition-colors duration-150"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+              <select
+                value={presetRole}
+                onChange={(e) => setPresetRole(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-gray-400 focus:outline-none"
+              >
+                <option value="" disabled>Select a role...</option>
+                {PRESET_ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
             </div>
-            <select
-              value={presetRole}
-              onChange={(e) => setPresetRole(e.target.value)}
-              disabled={jdNonEmpty}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-gray-400 focus:outline-none mb-4 disabled:cursor-not-allowed"
-            >
-              <option value="" disabled>Select a role...</option>
-              {PRESET_ROLES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              disabled
-              className="w-full bg-gray-700 text-gray-500 font-medium py-3 rounded-lg cursor-not-allowed opacity-60"
-            >
-              Coming Soon
-            </button>
           </div>
 
           {/* Error message */}
