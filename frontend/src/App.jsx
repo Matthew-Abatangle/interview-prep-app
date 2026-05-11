@@ -2,11 +2,13 @@ import { useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import JobInputPage from "./pages/JobInputPage";
 import QuestionsReadyPage from "./pages/QuestionsReadyPage";
 
 function AppInner() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
   const [page, setPage] = useState("login");
   const [sessionData, setSessionData] = useState(null);
 
@@ -19,13 +21,36 @@ function AppInner() {
   }
 
   if (!user) {
+    if (page === "reset_password") {
+      return <ResetPasswordPage onDone={() => setPage("login")} />;
+    }
     if (page === "signup") {
       return <SignUpPage onNavigateToLogin={() => setPage("login")} />;
     }
-    return <LoginPage onNavigateToSignUp={() => setPage("signup")} />;
+    if (page === "forgot_password") {
+      return <ForgotPasswordPage onNavigateToLogin={() => setPage("login")} />;
+    }
+    return (
+      <LoginPage
+        onNavigateToSignUp={() => setPage("signup")}
+        onForgotPassword={() => setPage("forgot_password")}
+      />
+    );
   }
 
   // User is authenticated
+  if (isPasswordRecovery) {
+    return (
+      <ResetPasswordPage
+        onDone={() => {
+          clearPasswordRecovery();
+          setPage("login");
+          signOut();
+        }}
+      />
+    );
+  }
+
   if (page === "questions_ready" && sessionData) {
     return (
       <QuestionsReadyPage

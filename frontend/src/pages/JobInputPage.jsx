@@ -112,18 +112,16 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
     <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
       <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="mb-10 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Prepare for Your Interview</h1>
-            <p className="text-gray-400 text-base">
-              Enter your job details to generate personalized behavioral questions.
-            </p>
-          </div>
+        <div className="relative mb-10 text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Prepare for Your Interview</h1>
+          <p className="text-gray-400 text-base">
+            Enter your job details to generate personalized behavioral questions.
+          </p>
           {onSignOut && (
             <button
               type="button"
               onClick={onSignOut}
-              className="text-slate-400 hover:text-white text-sm transition-colors duration-150 shrink-0 mt-1"
+              className="absolute top-0 right-0 text-slate-400 hover:text-white text-sm transition-colors duration-150"
             >
               Sign out
             </button>
