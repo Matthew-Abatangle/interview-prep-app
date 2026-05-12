@@ -1,4 +1,4 @@
-export default function QuestionsReadyPage({ sessionData, onBack }) {
+export default function QuestionsReadyPage({ sessionData, onStartInterview, onBack }) {
   const { questions } = sessionData;
 
   return (
@@ -32,13 +32,13 @@ export default function QuestionsReadyPage({ sessionData, onBack }) {
           ))}
         </ol>
 
-        {/* Start Interview button — disabled */}
+        {/* Start Interview button */}
         <button
           type="button"
-          disabled
-          className="w-full bg-indigo-800 text-indigo-400 font-semibold py-3 rounded-lg cursor-not-allowed opacity-50 mb-6"
+          onClick={onStartInterview}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all duration-150 mb-6"
         >
-          Coming Soon
+          Start Interview
         </button>
 
         {/* Start Over link */}

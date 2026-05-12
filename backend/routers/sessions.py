@@ -31,6 +31,10 @@ class CreateSessionResponse(BaseModel):
     session_id: str
 
 
+class UpdateSessionRequest(BaseModel):
+    feedback_timing: str
+
+
 @router.post("/api/sessions", response_model=CreateSessionResponse)
 async def create_session(request: Request, body: CreateSessionRequest):
     # Extract user_id from JWT payload (set by auth middleware)
@@ -92,3 +96,43 @@ async def create_session(request: Request, body: CreateSessionRequest):
             status_code=500,
             detail="Failed to create session. Please try again."
         )
+
+
+@router.patch("/api/sessions/{session_id}")
+async def update_session(session_id: str, request: Request, body: UpdateSessionRequest):
+    user_id = request.state.user["sub"]
+
+    if body.feedback_timing not in ("live", "end_only"):
+        raise HTTPException(status_code=400, detail="feedback_timing must be 'live' or 'end_only'")
+
+    try:
+        result = get_supabase().table("sessions").select("id, user_id, status").eq("id", session_id).execute()
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to fetch session.")
+
+    if not result.data:
+        raise HTTPException(status_code=400, detail="Session not found.")
+
+    session = result.data[0]
+
+    if session["user_id"] != user_id:
+        raise HTTPException(status_code=400, detail="Session not found.")
+
+    if session["status"] != "in_progress":
+        raise HTTPException(status_code=400, detail="Session is not in progress.")
+
+    try:
+        responses = get_supabase().table("session_responses").select("session_id", count="exact").eq("session_id", session_id).execute()
+        if responses.count and responses.count > 0:
+            raise HTTPException(status_code=400, detail="Cannot change feedback timing after answers have been recorded.")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to verify session state.")
+
+    try:
+        get_supabase().table("sessions").update({"feedback_timing": body.feedback_timing}).eq("id", session_id).execute()
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to update session.")
+
+    return {"session_id": session_id, "feedback_timing": body.feedback_timing}
