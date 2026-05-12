@@ -98,6 +98,8 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
           session_id: data.session_id,
           questions: data.questions,
           source: data.source,
+          job_title: trimmedTitle,
+          company_name: companyName ?? null,
         });
       } else {
         setError("We had trouble generating questions. Please try again or adjust your job description.");
