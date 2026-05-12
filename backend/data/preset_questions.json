@@ -1,0 +1,226 @@
+{
+  "software-engineering-intern": [
+    {
+      "id": 1,
+      "question": "What drew you to software engineering, and why are you pursuing an internship in this field right now?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you worked on a project with others where there was a disagreement about how to approach a problem. How did you handle it?",
+      "competency": "conflict_resolution",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Tell me about a time you used an AI tool — like GitHub Copilot, ChatGPT, or similar — to help you complete a technical task. How did you use it, what did it do well, and where did you have to compensate for its limitations?",
+      "competency": "adaptability",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you identified and fixed a bug or technical issue that others had overlooked. How did you find it and what did you do?",
+      "competency": "problem_solving",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Tell me about a project or assignment where something didn't go as planned and you had to change course. What did you learn from it?",
+      "competency": "failure_and_learning",
+      "arc_position": "depth"
+    }
+  ],
+  "data-science-intern": [
+    {
+      "id": 1,
+      "question": "What sparked your interest in data science or analytics, and what are you hoping to get out of an internship in this area?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you had to communicate a complex finding or idea to someone without a technical background. How did you approach it?",
+      "competency": "communication",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Tell me about a time you incorporated an AI or machine learning tool into your workflow — whether for analysis, automation, or building something. What did you learn about where those tools are useful and where they fall short?",
+      "competency": "adaptability",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you used data to influence a decision or change someone's point of view. What was the context and how did you present your findings?",
+      "competency": "problem_solving",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Describe a time your analysis led to a conclusion that turned out to be wrong or incomplete. What happened and what did you take away from it?",
+      "competency": "failure_and_learning",
+      "arc_position": "depth"
+    }
+  ],
+  "investment-banking-intern": [
+    {
+      "id": 1,
+      "question": "Why investment banking, and what specifically draws you to this type of work over other finance career paths?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you had to manage multiple competing priorities under a tight deadline. How did you decide what to focus on?",
+      "competency": "prioritization",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Describe a situation where you had to analyze a significant amount of financial or quantitative information to support a recommendation or decision.",
+      "competency": "analytical_thinking",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you built or contributed to a financial model, forecast, or detailed quantitative analysis. What was the context and what challenges did you run into?",
+      "competency": "problem_solving",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Tell me about a time you made a mistake on an important piece of work. How did you handle it and what did you do differently going forward?",
+      "competency": "failure_and_learning",
+      "arc_position": "depth"
+    }
+  ],
+  "consulting-intern": [
+    {
+      "id": 1,
+      "question": "Why consulting, and what about this type of work appeals to you at this stage of your career?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you had to work with a team where not everyone was aligned on the goal or approach. How did you move things forward?",
+      "competency": "collaboration",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Describe a situation where you had to quickly get up to speed on an unfamiliar topic or industry in order to contribute meaningfully. How did you do it?",
+      "competency": "adaptability",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you had to break down a complex or ambiguous problem into a structured approach. How did you frame the problem and what did you find?",
+      "competency": "analytical_thinking",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Describe a time you had to deliver a recommendation or conclusion that you knew would be unpopular or push back on. How did you handle it?",
+      "competency": "communication",
+      "arc_position": "depth"
+    }
+  ],
+  "product-management-intern": [
+    {
+      "id": 1,
+      "question": "What draws you to product management specifically, and why do you want to pursue it at this point in your career?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you had to influence people who didn't report to you to get something done. How did you approach it?",
+      "competency": "stakeholder_management",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Describe a situation where you had to make a decision with incomplete information or limited time. What was your process?",
+      "competency": "prioritization",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you identified a problem or gap that others hadn't noticed and took action to address it. What did you do and what was the result?",
+      "competency": "initiative",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Tell me about a project or initiative you drove that didn't achieve the outcome you expected. What would you do differently?",
+      "competency": "failure_and_learning",
+      "arc_position": "depth"
+    }
+  ],
+  "marketing-intern": [
+    {
+      "id": 1,
+      "question": "What draws you to marketing, and what specifically excites you about working in this field right now?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you had to tailor a message or communication style to a specific audience. How did you decide what approach to take?",
+      "competency": "communication",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Describe a situation where you worked on a creative project under constraints — whether time, budget, or direction. How did you navigate it?",
+      "competency": "adaptability",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you used data or feedback to improve a piece of content, a campaign, or a creative approach. What changed and what was the result?",
+      "competency": "analytical_thinking",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Describe a time a campaign, project, or idea you were involved in didn't land the way you expected. What did you learn and how did it shape your thinking?",
+      "competency": "failure_and_learning",
+      "arc_position": "depth"
+    }
+  ],
+  "finance-intern": [
+    {
+      "id": 1,
+      "question": "Why corporate finance, and what draws you to this type of role over other areas of finance or business?",
+      "competency": "motivation",
+      "arc_position": "motivation"
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a time you had to present or explain a financial or quantitative concept to someone unfamiliar with it. How did you make it accessible?",
+      "competency": "communication",
+      "arc_position": "general_behavioral"
+    },
+    {
+      "id": 3,
+      "question": "Describe a situation where you had to work carefully with numbers or data where accuracy really mattered. How did you make sure your work was correct?",
+      "competency": "analytical_thinking",
+      "arc_position": "role_context"
+    },
+    {
+      "id": 4,
+      "question": "Tell me about a time you had to track, analyze, or report on financial performance or budget variances. What was your process and what did you surface?",
+      "competency": "problem_solving",
+      "arc_position": "jd_specific"
+    },
+    {
+      "id": 5,
+      "question": "Tell me about a time you caught an error in your own work or someone else's before it caused a bigger problem. What happened and what did you put in place to prevent it again?",
+      "competency": "failure_and_learning",
+      "arc_position": "depth"
+    }
+  ]
+}

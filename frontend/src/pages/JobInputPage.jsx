@@ -38,11 +38,13 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
   const jdActive = jobDescription.replace(/\s/g, "").length >= 50;
   const jdNonEmpty = jobDescription.trim().length > 0;
   const presetActive = Boolean(presetRole);
-  const submitDisabled = !jobTitle.trim() || !jdActive || loading;
+
+  const jdSubmitDisabled = !jobTitle.trim() || !jdActive || loading;
+  const presetSubmitDisabled = !presetRole || loading;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (submitDisabled) return;
+    if (jdSubmitDisabled) return;
 
     setLoading(true);
     setError(null);
@@ -52,12 +54,10 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
     const companyName = extractCompanyName(trimmedJD);
 
     try {
-      // Get JWT token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       const authHeader = { Authorization: `Bearer ${token}` };
 
-      // Step 1: Create session via POST /api/sessions
       const sessionRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
@@ -78,7 +78,6 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
 
       const { session_id } = await sessionRes.json();
 
-      // Step 2: Generate questions
       const body = {
         job_title: trimmedTitle,
         job_description: trimmedJD,
@@ -106,6 +105,61 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
       }
     } catch {
       setError("We had trouble generating questions. Please try again or adjust your job description.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePresetSubmit() {
+    if (presetSubmitDisabled) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const authHeader = { Authorization: `Bearer ${token}` };
+
+      const sessionRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ job_title: presetRole, source: "preset" }),
+      });
+
+      if (sessionRes.status === 429) {
+        setError("You've reached your daily limit of 3 sessions. Come back tomorrow.");
+        setLoading(false);
+        return;
+      }
+      if (!sessionRes.ok) {
+        setError("Something went wrong starting your session. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const { session_id } = await sessionRes.json();
+
+      const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/preset-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ preset_role: presetRole, session_id }),
+      });
+
+      if (questionsRes.ok) {
+        const data = await questionsRes.json();
+        const roleLabel = PRESET_ROLES.find(r => r.value === presetRole)?.label ?? presetRole;
+        onSuccess({
+          session_id: data.session_id,
+          questions: data.questions,
+          source: data.source,
+          job_title: roleLabel,
+          company_name: null,
+        });
+      } else {
+        setError("We had trouble loading questions for this role. Please try again.");
+      }
+    } catch {
+      setError("We had trouble loading questions for this role. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -199,11 +253,8 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
                     Choose from a curated set of questions for common roles.
                   </p>
                 </div>
-                <div className="absolute top-0 right-0 flex items-center gap-2">
-                  <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full font-medium">
-                    Coming Soon
-                  </span>
-                  {presetActive && !jdNonEmpty && (
+                {presetActive && !jdNonEmpty && (
+                  <div className="absolute top-0 right-0">
                     <button
                       type="button"
                       onClick={() => setPresetRole("")}
@@ -211,19 +262,33 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
                     >
                       Clear
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
               <select
                 value={presetRole}
                 onChange={(e) => setPresetRole(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-gray-400 focus:outline-none"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="" disabled>Select a role...</option>
                 {PRESET_ROLES.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </select>
+              {presetActive && !jdNonEmpty && (
+                <button
+                  type="button"
+                  onClick={handlePresetSubmit}
+                  disabled={presetSubmitDisabled}
+                  className={`w-full mt-4 font-semibold py-3 rounded-lg transition-all duration-150 ${
+                    presetSubmitDisabled
+                      ? "bg-gray-700 text-gray-500 cursor-not-allowed opacity-50"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                  }`}
+                >
+                  {loading ? "Loading..." : "Start with Preset Questions"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -235,9 +300,9 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
           {/* JD Submit */}
           <button
             type="submit"
-            disabled={submitDisabled}
+            disabled={jdSubmitDisabled}
             className={`w-full font-semibold py-3 rounded-lg transition-all duration-150 ${
-              submitDisabled
+              jdSubmitDisabled
                 ? "bg-indigo-800 text-indigo-400 cursor-not-allowed opacity-50"
                 : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
             }`}
