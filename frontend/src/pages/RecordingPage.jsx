@@ -423,8 +423,8 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
                 </button>
 
                 {/* Time display */}
-                <span className="text-slate-400 text-xs font-mono flex-shrink-0 w-20">
-                  {formatTime(Math.floor(videoCurrentTime))} / {formatTime(Math.floor(videoDuration))}
+                <span className="text-slate-400 text-xs font-mono flex-shrink-0">
+                  {formatTime(Math.floor(videoCurrentTime))}
                 </span>
 
                 {/* Scrubber */}
