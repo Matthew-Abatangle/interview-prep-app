@@ -281,6 +281,15 @@ async def generate_debrief(body: DebriefRequest, request: Request):
     if existing.data:
         cached = existing.data[0]
         per_q = cached.get("per_question_scores") or []
+        # Fetch responses to re-attach audio metrics (not stored in per_question_scores jsonb)
+        cached_responses_res = db.table("session_responses").select("*").eq("session_id", session_id).execute()
+        cached_responses = cached_responses_res.data or []
+        cached_response_map = {r["question_id"]: r for r in cached_responses}
+        for q in per_q:
+            r = cached_response_map.get(q.get("id"), {})
+            q["filler_word_count"] = r.get("filler_word_count", 0)
+            q["words_per_minute"] = r.get("words_per_minute", 0)
+            q["answer_duration_seconds"] = r.get("answer_duration_seconds", 0)
         return {
             "session_id": session_id,
             "overall_score": cached["overall_score"],
@@ -327,6 +336,13 @@ async def generate_debrief(body: DebriefRequest, request: Request):
                 )
 
     questions_out = parsed["questions"]
+    # Merge audio metrics from session_responses into each question output
+    response_map = {r["question_id"]: r for r in responses}
+    for q in questions_out:
+        r = response_map.get(q.get("id"), {})
+        q["filler_word_count"] = r.get("filler_word_count", 0)
+        q["words_per_minute"] = r.get("words_per_minute", 0)
+        q["answer_duration_seconds"] = r.get("answer_duration_seconds", 0)
     overall_score = parsed["overall_score"]
     top_weaknesses = parsed["top_weaknesses"]
     summary_text = parsed["summary_text"]
