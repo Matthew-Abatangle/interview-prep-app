@@ -15,6 +15,10 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   const [metrics, setMetrics] = useState(Array(5).fill(null));
   const [blobUrl, setBlobUrl] = useState(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0); // 0–100
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [debriefError, setDebriefError] = useState(null);
 
   const mediaRecorderRef = useRef(null);
@@ -214,6 +218,11 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
       setBlobUrl(null);
     }
 
+    setIsPlaying(false);
+    setVideoProgress(0);
+    setVideoCurrentTime(0);
+    setVideoDuration(0);
+
     if (qIndex >= 4) {
       setPhaseWithRef("debrief_trigger");
     } else {
@@ -352,22 +361,104 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
           <p className="text-slate-400 text-sm mb-6">Question {qIndex + 1} of 5 — Feedback</p>
 
           {blobUrl && (
-            <div className="relative rounded-xl overflow-hidden bg-black mb-6 aspect-video">
-              <video
-                ref={playbackVideoRef}
-                src={blobUrl}
-                autoPlay
-                muted={isMuted}
-                playsInline
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => setIsMuted((prev) => !prev)}
-                className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-lg transition-all duration-150"
-              >
-                {isMuted ? "Unmute" : "Mute"}
-              </button>
+            <div className="rounded-xl overflow-hidden bg-black mb-6">
+              <div className="aspect-video">
+                <video
+                  ref={playbackVideoRef}
+                  src={blobUrl}
+                  muted={isMuted}
+                  playsInline
+                  className="w-full h-full object-cover"
+                  onLoadedMetadata={() => {
+                    const vid = playbackVideoRef.current;
+                    if (vid) {
+                      setVideoDuration(vid.duration);
+                      vid.play().then(() => setIsPlaying(true)).catch(() => {});
+                    }
+                  }}
+                  onTimeUpdate={() => {
+                    const vid = playbackVideoRef.current;
+                    if (vid && vid.duration) {
+                      setVideoCurrentTime(vid.currentTime);
+                      setVideoProgress((vid.currentTime / vid.duration) * 100);
+                    }
+                  }}
+                  onEnded={() => setIsPlaying(false)}
+                />
+              </div>
+
+              {/* Custom controls bar */}
+              <div className="bg-slate-900 px-4 py-3 flex items-center gap-3">
+                {/* Play/Pause */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const vid = playbackVideoRef.current;
+                    if (!vid) return;
+                    if (vid.paused) {
+                      vid.play().then(() => setIsPlaying(true)).catch(() => {});
+                    } else {
+                      vid.pause();
+                      setIsPlaying(false);
+                    }
+                  }}
+                  className="text-white hover:text-indigo-400 transition-colors flex-shrink-0"
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="4" width="4" height="16" rx="1" />
+                      <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M5 3.868v16.264c0 .858.97 1.348 1.671.847l12.5-8.132a1 1 0 0 0 0-1.694l-12.5-8.132C6.97 2.52 5 3.01 5 3.868z" />
+                    </svg>
+                  )}
+                </button>
+
+                {/* Time display */}
+                <span className="text-slate-400 text-xs font-mono flex-shrink-0 w-20">
+                  {formatTime(Math.floor(videoCurrentTime))} / {formatTime(Math.floor(videoDuration))}
+                </span>
+
+                {/* Scrubber */}
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={videoProgress}
+                  onChange={(e) => {
+                    const vid = playbackVideoRef.current;
+                    if (!vid || !vid.duration) return;
+                    const newTime = (parseFloat(e.target.value) / 100) * vid.duration;
+                    vid.currentTime = newTime;
+                    setVideoProgress(parseFloat(e.target.value));
+                    setVideoCurrentTime(newTime);
+                  }}
+                  className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-indigo-500 bg-slate-700"
+                />
+
+                {/* Mute toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsMuted((prev) => !prev)}
+                  className="text-slate-400 hover:text-white transition-colors flex-shrink-0"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13 3.586a1 1 0 0 0-1.707-.707L6.586 7.5H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h3.586l4.707 4.621A1 1 0 0 0 13 20.414V3.586zM17.07 8.344a1 1 0 1 0-1.414 1.414 4 4 0 0 1 0 4.485 1 1 0 1 0 1.414 1.414 6 6 0 0 0 0-7.313z" />
+                      <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13 3.586a1 1 0 0 0-1.707-.707L6.586 7.5H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h3.586l4.707 4.621A1 1 0 0 0 13 20.414V3.586zM17.07 8.344a1 1 0 1 0-1.414 1.414 4 4 0 0 1 0 4.485 1 1 0 1 0 1.414 1.414 6 6 0 0 0 0-7.313z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
