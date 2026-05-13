@@ -39,19 +39,17 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
   const jdNonEmpty = jobDescription.trim().length > 0;
   const presetActive = Boolean(presetRole);
 
-  const jdSubmitDisabled = !jobTitle.trim() || !jdActive || loading;
-  const presetSubmitDisabled = !presetRole || loading;
+  const submitDisabled = (!jdActive && !presetActive) || loading;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (jdSubmitDisabled) return;
+    if (submitDisabled) return;
 
     setLoading(true);
     setError(null);
 
-    const trimmedTitle = jobTitle.trim();
-    const trimmedJD = jobDescription.trim();
-    const companyName = extractCompanyName(trimmedJD);
+    const source = jdActive ? "jd" : "preset";
+    const trimmedTitle = jdActive ? jobTitle.trim() : presetRole;
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -61,7 +59,7 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
       const sessionRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ job_title: trimmedTitle, source: "jd" }),
+        body: JSON.stringify({ job_title: trimmedTitle, source }),
       });
 
       if (sessionRes.status === 429) {
@@ -78,88 +76,58 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
 
       const { session_id } = await sessionRes.json();
 
-      const body = {
-        job_title: trimmedTitle,
-        job_description: trimmedJD,
-        session_id,
-      };
-      if (companyName) body.company_name = companyName;
+      if (jdActive) {
+        const trimmedJD = jobDescription.trim();
+        const companyName = extractCompanyName(trimmedJD);
 
-      const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify(body),
-      });
-
-      if (questionsRes.ok) {
-        const data = await questionsRes.json();
-        onSuccess({
-          session_id: data.session_id,
-          questions: data.questions,
-          source: data.source,
+        const body = {
           job_title: trimmedTitle,
-          company_name: companyName ?? null,
+          job_description: trimmedJD,
+          session_id,
+        };
+        if (companyName) body.company_name = companyName;
+
+        const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-questions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader },
+          body: JSON.stringify(body),
         });
+
+        if (questionsRes.ok) {
+          const data = await questionsRes.json();
+          onSuccess({
+            session_id: data.session_id,
+            questions: data.questions,
+            source: data.source,
+            job_title: trimmedTitle,
+            company_name: companyName ?? null,
+          });
+        } else {
+          setError("We had trouble generating questions. Please try again or adjust your job description.");
+        }
       } else {
-        setError("We had trouble generating questions. Please try again or adjust your job description.");
+        const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/preset-questions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader },
+          body: JSON.stringify({ preset_role: presetRole, session_id }),
+        });
+
+        if (questionsRes.ok) {
+          const data = await questionsRes.json();
+          const roleLabel = PRESET_ROLES.find(r => r.value === presetRole)?.label ?? presetRole;
+          onSuccess({
+            session_id: data.session_id,
+            questions: data.questions,
+            source: data.source,
+            job_title: roleLabel,
+            company_name: null,
+          });
+        } else {
+          setError("We had trouble loading questions for this role. Please try again.");
+        }
       }
     } catch {
-      setError("We had trouble generating questions. Please try again or adjust your job description.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handlePresetSubmit() {
-    if (presetSubmitDisabled) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const authHeader = { Authorization: `Bearer ${token}` };
-
-      const sessionRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ job_title: presetRole, source: "preset" }),
-      });
-
-      if (sessionRes.status === 429) {
-        setError("You've reached your daily limit of 3 sessions. Come back tomorrow.");
-        setLoading(false);
-        return;
-      }
-      if (!sessionRes.ok) {
-        setError("Something went wrong starting your session. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      const { session_id } = await sessionRes.json();
-
-      const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/preset-questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ preset_role: presetRole, session_id }),
-      });
-
-      if (questionsRes.ok) {
-        const data = await questionsRes.json();
-        const roleLabel = PRESET_ROLES.find(r => r.value === presetRole)?.label ?? presetRole;
-        onSuccess({
-          session_id: data.session_id,
-          questions: data.questions,
-          source: data.source,
-          job_title: roleLabel,
-          company_name: null,
-        });
-      } else {
-        setError("We had trouble loading questions for this role. Please try again.");
-      }
-    } catch {
-      setError("We had trouble loading questions for this role. Please try again.");
+      setError("We had trouble generating questions. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -185,7 +153,7 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} noValidate className="space-y-8">
 
           {/* Job Title + JD Path — fades together when preset is active */}
           <div className={`space-y-8 transition-opacity duration-200 ${presetActive ? "opacity-40 pointer-events-none" : ""}`}>
@@ -275,20 +243,6 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </select>
-              {presetActive && !jdNonEmpty && (
-                <button
-                  type="button"
-                  onClick={handlePresetSubmit}
-                  disabled={presetSubmitDisabled}
-                  className={`w-full mt-4 font-semibold py-3 rounded-lg transition-all duration-150 ${
-                    presetSubmitDisabled
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed opacity-50"
-                      : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
-                  }`}
-                >
-                  {loading ? "Loading..." : "Start with Preset Questions"}
-                </button>
-              )}
             </div>
           </div>
 
@@ -297,17 +251,17 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
             <p className="text-red-400 text-sm">{error}</p>
           )}
 
-          {/* JD Submit */}
+          {/* Submit */}
           <button
             type="submit"
-            disabled={jdSubmitDisabled}
+            disabled={submitDisabled}
             className={`w-full font-semibold py-3 rounded-lg transition-all duration-150 ${
-              jdSubmitDisabled
+              submitDisabled
                 ? "bg-indigo-800 text-indigo-400 cursor-not-allowed opacity-50"
                 : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
             }`}
           >
-            {loading ? "Generating..." : "Generate My Questions"}
+            {loading ? "Loading..." : jdActive ? "Generate My Questions" : "Start Interview"}
           </button>
         </form>
       </div>
