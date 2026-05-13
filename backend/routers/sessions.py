@@ -70,7 +70,7 @@ async def create_session(request: Request, body: CreateSessionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to create session. Please try again.")
 
-    if session_count >= 3:
+    if session_count >= 100:
         raise HTTPException(
             status_code=429,
             detail="Daily session limit reached. Maximum 3 sessions per day."
