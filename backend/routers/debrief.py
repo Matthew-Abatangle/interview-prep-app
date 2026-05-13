@@ -187,7 +187,8 @@ def validate_and_clean(parsed, session_source):
     if len(questions) != 5:
         raise ValueError(f"Expected 5 questions, got {len(questions)}")
 
-    for q in questions:
+    for i, q in enumerate(questions):
+        q["id"] = q.get("id", i + 1)  # preserve LLM id or fall back to 1-based index
         for field in ["star_score", "content_score", "relevance_score", "composite_score"]:
             val = q.get(field)
             if val is None:

@@ -185,12 +185,6 @@ export default function DebriefPage({ debriefData, sessionSource, sessionQuestio
                       )}
                     </div>
 
-                    {/* Composite */}
-                    <div className="bg-slate-700/50 rounded-lg px-4 py-2 mb-4 flex items-center justify-between">
-                      <p className="text-slate-400 text-xs">Composite</p>
-                      <p className="text-white font-semibold text-sm">{q.composite_score ?? "—"} / 10</p>
-                    </div>
-
                     {/* Written feedback */}
                     {q.written_feedback && (
                       <p className="text-slate-300 text-sm leading-relaxed mb-4">{q.written_feedback}</p>
