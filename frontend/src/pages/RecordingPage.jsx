@@ -371,16 +371,21 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
                   className="w-full h-full object-cover"
                   onLoadedMetadata={() => {
                     const vid = playbackVideoRef.current;
-                    if (vid) {
-                      setVideoDuration(vid.duration);
-                      vid.play().then(() => setIsPlaying(true)).catch(() => {});
-                    }
+                    if (!vid) return;
+                    // MediaRecorder WebM blobs often have Infinity duration —
+                    // fall back to AssemblyAI answer_duration_seconds
+                    const knownDuration = metrics[qIndex]?.answer_duration_seconds;
+                    const dur = isFinite(vid.duration) ? vid.duration : (knownDuration || 0);
+                    setVideoDuration(dur);
+                    vid.play().then(() => setIsPlaying(true)).catch(() => {});
                   }}
                   onTimeUpdate={() => {
                     const vid = playbackVideoRef.current;
-                    if (vid && vid.duration) {
-                      setVideoCurrentTime(vid.currentTime);
-                      setVideoProgress((vid.currentTime / vid.duration) * 100);
+                    if (!vid) return;
+                    const currentTime = vid.currentTime;
+                    setVideoCurrentTime(currentTime);
+                    if (videoDuration > 0) {
+                      setVideoProgress((currentTime / videoDuration) * 100);
                     }
                   }}
                   onEnded={() => setIsPlaying(false)}
@@ -431,8 +436,8 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
                   value={videoProgress}
                   onChange={(e) => {
                     const vid = playbackVideoRef.current;
-                    if (!vid || !vid.duration) return;
-                    const newTime = (parseFloat(e.target.value) / 100) * vid.duration;
+                    if (!vid || videoDuration === 0) return;
+                    const newTime = (parseFloat(e.target.value) / 100) * videoDuration;
                     vid.currentTime = newTime;
                     setVideoProgress(parseFloat(e.target.value));
                     setVideoCurrentTime(newTime);
