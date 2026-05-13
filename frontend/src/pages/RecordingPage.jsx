@@ -160,11 +160,9 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   async function processRecording(duration) {
     const blob = new Blob(chunksRef.current, { type: "video/webm" });
 
-    if (feedback_timing === "live") {
-      const url = URL.createObjectURL(blob);
-      blobUrlRef.current = url;
-      setBlobUrl(url);
-    }
+    const url = URL.createObjectURL(blob);
+    blobUrlRef.current = url;
+    setBlobUrl(url);
 
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
@@ -204,11 +202,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
       return updated;
     });
 
-    if (feedback_timing === "live") {
-      setPhaseWithRef("feedback");
-    } else {
-      advanceQuestion();
-    }
+    setPhaseWithRef("feedback");
   }
 
   function advanceQuestion() {
@@ -355,6 +349,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   if (phase === "feedback") {
     const m = metrics[qIndex];
     const isLastQuestion = qIndex >= 4;
+    const isLive = feedback_timing === "live";
     return (
       <div className="min-h-screen bg-slate-900 text-white flex items-start justify-center px-4 py-12">
         <div className="w-full max-w-2xl">
@@ -467,29 +462,42 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
             </div>
           )}
 
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
-            <h3 className="text-white font-semibold mb-4">Quick Feedback</h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-indigo-400">
-                  {m?.filler_word_count != null ? m.filler_word_count : "—"}
-                </p>
-                <p className="text-slate-400 text-xs mt-1">Filler words</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-indigo-400">
-                  {m?.words_per_minute != null ? m.words_per_minute : "—"}
-                </p>
-                <p className="text-slate-400 text-xs mt-1">WPM</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-indigo-400">
-                  {m?.answer_duration_seconds != null ? formatTime(m.answer_duration_seconds) : "—"} / 2:00
-                </p>
-                <p className="text-slate-400 text-xs mt-1">Time used</p>
+          {isLive && (
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
+              <h3 className="text-white font-semibold mb-4">Quick Feedback</h3>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-indigo-400">
+                    {m?.filler_word_count != null ? m.filler_word_count : "—"}
+                  </p>
+                  <p className="text-slate-400 text-xs mt-1">Filler words</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-indigo-400">
+                    {m?.words_per_minute != null ? m.words_per_minute : "—"}
+                  </p>
+                  <p className="text-slate-400 text-xs mt-1">WPM</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-indigo-400">
+                    {m?.answer_duration_seconds != null ? formatTime(m.answer_duration_seconds) : "—"} / 2:00
+                  </p>
+                  <p className="text-slate-400 text-xs mt-1">Time used</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {!isLive && (
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <p className="text-slate-400 text-sm">Time used</p>
+                <p className="text-white font-semibold tabular-nums">
+                  {m?.answer_duration_seconds != null ? formatTime(m.answer_duration_seconds) : "—"} / 2:00
+                </p>
+              </div>
+            </div>
+          )}
 
           <button
             type="button"
