@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import httpx
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from supabase import create_client
@@ -348,7 +349,7 @@ async def generate_debrief(body: DebriefRequest, request: Request):
         # Update sessions.status → completed
         db.table("sessions").update({
             "status": "completed",
-            "completed_at": "now()",
+            "completed_at": datetime.now(timezone.utc).isoformat(),
         }).eq("id", session_id).execute()
 
     except Exception as e:
