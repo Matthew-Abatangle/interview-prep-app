@@ -1,4 +1,5 @@
 import os
+import re
 import asyncio
 import httpx
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
@@ -19,10 +20,22 @@ def get_supabase():
     return _supabase_client
 
 
-FILLER_WORDS = {
-    "uh", "um", "uh-huh", "mm-hmm", "hmm", "like", "you know",
-    "actually", "basically", "literally", "right", "okay", "so", "well"
-}
+FILLER_WORDS = [
+    # Single-word fillers
+    "uh", "um", "hmm", "mhm", "uh-huh", "mm-hmm",
+    "like", "right", "so", "well", "okay", "ok",
+    "actually", "basically", "literally", "honestly",
+    "seriously", "clearly", "obviously", "definitely",
+    "totally", "absolutely", "essentially", "technically",
+    "generally", "typically", "normally", "usually",
+    "kind", "sort", "just", "really", "very",
+    # Multi-word fillers (must come first in matching)
+    "you know", "i mean", "i guess", "i think",
+    "kind of", "sort of", "you see", "like i said",
+    "at the end of the day", "to be honest",
+    "if that makes sense", "does that make sense",
+    "and stuff", "and things", "or whatever",
+]
 
 
 @router.post("/api/transcribe")
@@ -103,13 +116,18 @@ async def transcribe_audio(
 
         transcript_text = poll_data.get("text") or ""
 
-        # Filler word count
+        # Filler word count — post-processing pass on transcript text
         filler_word_count = 0
         try:
-            words = poll_data.get("words") or []
-            filler_word_count = sum(
-                1 for w in words if w.get("text", "").lower().strip() in FILLER_WORDS
-            )
+            if transcript_text:
+                text_lower = transcript_text.lower()
+                # Sort by length descending so multi-word phrases match before single words
+                sorted_fillers = sorted(FILLER_WORDS, key=len, reverse=True)
+                for filler in sorted_fillers:
+                    # Count non-overlapping occurrences, bounded by word boundaries
+                    pattern = r'\b' + re.escape(filler) + r'\b'
+                    matches = re.findall(pattern, text_lower)
+                    filler_word_count += len(matches)
         except Exception:
             filler_word_count = 0
 
