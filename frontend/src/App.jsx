@@ -60,6 +60,8 @@ function AppInner() {
     return (
       <DebriefPage
         debriefData={debriefData}
+        sessionSource={sessionData?.source}
+        sessionQuestions={sessionData?.questions}
         onReset={() => {
           setDebriefData(null);
           setSessionData(null);
