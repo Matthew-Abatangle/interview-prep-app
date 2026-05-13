@@ -489,12 +489,12 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
           )}
 
           {!isLive && (
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <p className="text-slate-400 text-sm">Time used</p>
-                <p className="text-white font-semibold tabular-nums">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-indigo-400">
                   {m?.answer_duration_seconds != null ? formatTime(m.answer_duration_seconds) : "—"} / 2:00
                 </p>
+                <p className="text-slate-400 text-xs mt-1">Time used</p>
               </div>
             </div>
           )}
