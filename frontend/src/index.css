@@ -17,6 +17,34 @@
   animation: fadeUp 350ms ease-out both;
 }
 
+@keyframes fadeUpDebrief {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up-debrief {
+  opacity: 0;
+  animation: fadeUpDebrief 500ms ease-out forwards;
+}
+
+.animate-fade-up-debrief.is-visible {
+  opacity: 1;
+}
+
+.delay-0   { animation-delay: 0ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;

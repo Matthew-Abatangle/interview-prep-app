@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -43,6 +43,32 @@ function DimensionCard({ label, score }) {
   );
 }
 
+function AnimatedBlock({ delay = 0, children, className = "" }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`animate-fade-up-debrief ${visible ? "is-visible" : ""} ${className}`}
+      style={{ animationDelay: `${delay}ms`, animationPlayState: visible ? "running" : "paused" }}
+    >
+      {children}
+    </div>
+  );
+}
+
 const ARC_LABELS = {
   motivation: "Motivation",
   general_behavioral: "General",
@@ -51,20 +77,119 @@ const ARC_LABELS = {
   depth: "Depth",
 };
 
+function AccordionItem({ q, index, isOpen, onToggle, isJD, questionMap }) {
+  const contentRef = useRef(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setHeight(isOpen ? contentRef.current.scrollHeight : 0);
+    }
+  }, [isOpen]);
+
+  const meta = questionMap[q.id] ?? {};
+  const arcLabel = ARC_LABELS[meta.arc_position] ?? meta.arc_position ?? "";
+
+  return (
+    <AnimatedBlock delay={300 + index * 80}>
+      <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+        {/* Collapsed row */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-700/40 transition-colors duration-150"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-slate-400 text-sm font-medium">Q{q.id}</span>
+            {arcLabel && (
+              <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+                {arcLabel}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-indigo-400 font-semibold text-sm">
+              {q.composite_score ?? "—"}<span className="text-slate-500 font-normal">/10</span>
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
+        </button>
+
+        {/* Smooth expand/collapse */}
+        <div
+          style={{ height: `${height}px`, transition: "height 300ms ease", overflow: "hidden" }}
+        >
+          <div ref={contentRef} className="px-5 pb-5 border-t border-slate-700">
+            {/* Question text */}
+            <p className="text-slate-300 text-sm leading-relaxed mt-4 mb-5">
+              {meta.question ?? `Question ${q.id}`}
+            </p>
+
+            {/* Dimension scores */}
+            <div className={`grid gap-3 mb-4 ${isJD ? "grid-cols-4" : "grid-cols-3"}`}>
+              <div className="text-center">
+                <p className="text-lg font-bold text-indigo-400">{q.star_score ?? "—"}</p>
+                <p className="text-slate-400 text-xs mt-0.5">STAR</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-indigo-400">{q.content_score ?? "—"}</p>
+                <p className="text-slate-400 text-xs mt-0.5">Content</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-indigo-400">{q.relevance_score ?? "—"}</p>
+                <p className="text-slate-400 text-xs mt-0.5">Relevance</p>
+              </div>
+              {isJD && (
+                <div className="text-center">
+                  <p className="text-lg font-bold text-indigo-400">{q.jd_alignment_score ?? "—"}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">JD Align</p>
+                </div>
+              )}
+            </div>
+
+            {/* Written feedback */}
+            {q.written_feedback && (
+              <p className="text-slate-300 text-sm leading-relaxed mb-4">{q.written_feedback}</p>
+            )}
+
+            {/* Audio metrics footer */}
+            <div className="border-t border-slate-700 pt-3 grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-white font-semibold text-sm">{q.filler_word_count ?? "—"}</p>
+                <p className="text-slate-400 text-xs mt-0.5">Filler words</p>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">{q.words_per_minute ?? "—"}</p>
+                <p className="text-slate-400 text-xs mt-0.5">WPM</p>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">
+                  {q.answer_duration_seconds != null ? formatTime(q.answer_duration_seconds) : "—"} / 2:00
+                </p>
+                <p className="text-slate-400 text-xs mt-0.5">Time used</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AnimatedBlock>
+  );
+}
+
 export default function DebriefPage({ debriefData, sessionSource, sessionQuestions, onReset }) {
   const [openIndex, setOpenIndex] = useState(null);
 
   if (!debriefData) return null;
 
-  const {
-    overall_score,
-    dimension_averages,
-    top_weaknesses,
-    summary_text,
-    questions,
-  } = debriefData;
-
+  const { overall_score, dimension_averages, top_weaknesses, summary_text, questions } = debriefData;
   const isJD = sessionSource === "jd";
+
   const questionMap = (sessionQuestions ?? []).reduce((acc, q) => {
     acc[q.id] = q;
     return acc;
@@ -79,153 +204,84 @@ export default function DebriefPage({ debriefData, sessionSource, sessionQuestio
 
   return (
     <div className="min-h-screen bg-slate-900 text-white px-4 py-12">
-      <div className="w-full max-w-2xl mx-auto animate-fade-up">
+      <div className="w-full max-w-2xl mx-auto">
 
-        {/* ── SECTION 1: SESSION SCORECARD ── */}
-        <h1 className="text-2xl font-bold text-white mb-8">Your Debrief</h1>
+        <AnimatedBlock delay={0}>
+          <h1 className="text-2xl font-bold text-white mb-8">Your Debrief</h1>
+        </AnimatedBlock>
 
         {/* Overall score */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 mb-6 flex flex-col items-center">
-          <ScoreRing score={overall_score} />
-          <p className="text-slate-400 text-sm mt-3">Overall Score</p>
-        </div>
+        <AnimatedBlock delay={100} className="mb-6">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 flex flex-col items-center">
+            <ScoreRing score={overall_score} />
+            <p className="text-slate-400 text-sm mt-3">Overall Score</p>
+          </div>
+        </AnimatedBlock>
 
         {/* Dimension averages */}
-        <div className={`grid gap-4 mb-6 ${isJD ? "grid-cols-4" : "grid-cols-3"}`}>
-          {dimensions.map((d) => (
-            <DimensionCard key={d.label} label={d.label} score={d.score} />
-          ))}
-        </div>
+        <AnimatedBlock delay={200} className="mb-6">
+          <div className={`grid gap-4 ${isJD ? "grid-cols-4" : "grid-cols-3"}`}>
+            {dimensions.map((d) => (
+              <DimensionCard key={d.label} label={d.label} score={d.score} />
+            ))}
+          </div>
+        </AnimatedBlock>
 
         {/* Top weaknesses */}
         {top_weaknesses?.length > 0 && (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
-            <h2 className="text-white font-semibold mb-3">Top Weaknesses</h2>
-            <ul className="space-y-2">
-              {top_weaknesses.map((w, i) => (
-                <li key={i} className="flex gap-3">
-                  <span className="text-red-400 mt-0.5 flex-shrink-0">•</span>
-                  <p className="text-slate-300 text-sm leading-relaxed">{w}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <AnimatedBlock delay={300} className="mb-6">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+              <h2 className="text-white font-semibold mb-3">Top Weaknesses</h2>
+              <ul className="space-y-2">
+                {top_weaknesses.map((w, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="text-red-400 mt-0.5 flex-shrink-0">•</span>
+                    <p className="text-slate-300 text-sm leading-relaxed">{w}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </AnimatedBlock>
         )}
 
         {/* Summary */}
         {summary_text && (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-10">
-            <h2 className="text-white font-semibold mb-3">Session Summary</h2>
-            <p className="text-slate-300 text-sm leading-relaxed">{summary_text}</p>
-          </div>
+          <AnimatedBlock delay={400} className="mb-10">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+              <h2 className="text-white font-semibold mb-3">Session Summary</h2>
+              <p className="text-slate-300 text-sm leading-relaxed">{summary_text}</p>
+            </div>
+          </AnimatedBlock>
         )}
 
-        {/* ── SECTION 2: PER-QUESTION ACCORDION ── */}
-        <h2 className="text-lg font-semibold text-white mb-4">Question Breakdown</h2>
+        {/* Question Breakdown */}
+        <AnimatedBlock delay={500}>
+          <h2 className="text-lg font-semibold text-white mb-4">Question Breakdown</h2>
+        </AnimatedBlock>
+
         <div className="space-y-3 mb-10">
-          {questions?.map((q, i) => {
-            const isOpen = openIndex === i;
-            const meta = questionMap[q.id] ?? {};
-            const arcLabel = ARC_LABELS[meta.arc_position] ?? meta.arc_position ?? "";
-            return (
-              <div key={q.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-                {/* Collapsed row */}
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-750 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-400 text-sm font-medium">Q{q.id}</span>
-                    {arcLabel && (
-                      <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
-                        {arcLabel}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-indigo-400 font-semibold text-sm">
-                      {q.composite_score ?? "—"}<span className="text-slate-500 font-normal">/10</span>
-                    </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    >
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </div>
-                </button>
-
-                {/* Expanded content */}
-                {isOpen && (
-                  <div className="px-5 pb-5 border-t border-slate-700">
-                    {/* Question text */}
-                    <p className="text-slate-300 text-sm leading-relaxed mt-4 mb-5">{meta.question ?? `Question ${q.id}`}</p>
-
-                    {/* Dimension scores */}
-                    <div className={`grid gap-3 mb-4 ${isJD ? "grid-cols-4" : "grid-cols-3"}`}>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-indigo-400">{q.star_score ?? "—"}</p>
-                        <p className="text-slate-400 text-xs mt-0.5">STAR</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-indigo-400">{q.content_score ?? "—"}</p>
-                        <p className="text-slate-400 text-xs mt-0.5">Content</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-indigo-400">{q.relevance_score ?? "—"}</p>
-                        <p className="text-slate-400 text-xs mt-0.5">Relevance</p>
-                      </div>
-                      {isJD && (
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-indigo-400">{q.jd_alignment_score ?? "—"}</p>
-                          <p className="text-slate-400 text-xs mt-0.5">JD Align</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Written feedback */}
-                    {q.written_feedback && (
-                      <p className="text-slate-300 text-sm leading-relaxed mb-4">{q.written_feedback}</p>
-                    )}
-
-                    {/* Audio metrics footer */}
-                    <div className="border-t border-slate-700 pt-3 grid grid-cols-3 gap-3 text-center">
-                      <div>
-                        <p className="text-white font-semibold text-sm">
-                          {q.filler_word_count ?? "—"}
-                        </p>
-                        <p className="text-slate-400 text-xs mt-0.5">Filler words</p>
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold text-sm">
-                          {q.words_per_minute ?? "—"}
-                        </p>
-                        <p className="text-slate-400 text-xs mt-0.5">WPM</p>
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold text-sm">
-                          {q.answer_duration_seconds != null ? formatTime(q.answer_duration_seconds) : "—"} / 2:00
-                        </p>
-                        <p className="text-slate-400 text-xs mt-0.5">Time used</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {questions?.map((q, i) => (
+            <AccordionItem
+              key={q.id ?? i}
+              q={q}
+              index={i}
+              isOpen={openIndex === i}
+              onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+              isJD={isJD}
+              questionMap={questionMap}
+            />
+          ))}
         </div>
 
-        {/* Start New Session */}
-        <button
-          type="button"
-          onClick={onReset}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all duration-150"
-        >
-          Start New Session
-        </button>
+        <AnimatedBlock delay={600}>
+          <button
+            type="button"
+            onClick={onReset}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all duration-150"
+          >
+            Start New Session
+          </button>
+        </AnimatedBlock>
 
       </div>
     </div>
