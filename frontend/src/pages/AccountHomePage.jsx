@@ -152,7 +152,7 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Sticky nav bar */}
-      <div className="sticky top-0 z-50 h-14 bg-gray-900 border-b border-gray-800 px-6 flex items-center justify-between">
+      <div className="sticky top-0 z-50 h-14 bg-gray-900 px-6 flex items-center justify-between">
         <span className="text-sm font-semibold text-white">Interview Prep</span>
         <div className="flex items-center gap-2">
           <button
