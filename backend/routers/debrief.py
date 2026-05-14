@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import asyncio
 import httpx
@@ -19,6 +20,26 @@ def get_supabase():
             os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         )
     return _supabase_client
+
+
+INJECTION_PATTERNS = [
+    r'ignore\s+(all\s+|previous\s+|above\s+|your\s+)?instructions',
+    r'you\s+are\s+now',
+    r'new\s+persona',
+    r'system\s*:',
+    r'\[INST\]',
+    r'disregard\s+(all\s+|your\s+)?',
+    r'forget\s+(everything|all)',
+    r'do\s+not\s+follow',
+    r'override\s+(your\s+|all\s+)?',
+]
+
+def sanitize_jd(text: str) -> str:
+    for pattern in INJECTION_PATTERNS:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    # collapse any double spaces left by stripping
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
 
 
 SYSTEM_PROMPT = """You are an expert behavioral interview coach evaluating a candidate's performance in a 5-question AI-scored behavioral interview. Your job is to produce a thorough, honest, and actionable debrief that tells the candidate exactly how they performed and precisely what to improve.
@@ -117,6 +138,13 @@ def build_user_prompt(session, questions, responses):
     if job_description and len(job_description) > 3000:
         job_description = job_description[:3000]
         print(f"[debrief] JD truncated to 3000 chars")
+
+    # Sanitize JD for prompt injection patterns
+    if job_description:
+        original = job_description
+        job_description = sanitize_jd(job_description)
+        if job_description != original:
+            print(f"[SECURITY] JD sanitization stripped content in debrief. session_id={session.get('id')}")
 
     lines = ["You are evaluating a behavioral interview session. Here is the full session context:", "", "---", "", "SESSION INFO"]
     lines.append(f"Job title: {job_title}")

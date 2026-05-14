@@ -28,6 +28,26 @@ def get_supabase():
         )
     return _supabase_client
 
+INJECTION_PATTERNS = [
+    r'ignore\s+(all\s+|previous\s+|above\s+|your\s+)?instructions',
+    r'you\s+are\s+now',
+    r'new\s+persona',
+    r'system\s*:',
+    r'\[INST\]',
+    r'disregard\s+(all\s+|your\s+)?',
+    r'forget\s+(everything|all)',
+    r'do\s+not\s+follow',
+    r'override\s+(your\s+|all\s+)?',
+]
+
+def sanitize_jd(text: str) -> str:
+    for pattern in INJECTION_PATTERNS:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    # collapse any double spaces left by stripping
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
+
+
 VALID_COMPETENCIES = {
     "motivation", "conflict_resolution", "leadership", "communication",
     "collaboration", "adaptability", "initiative", "analytical_thinking",
@@ -202,6 +222,13 @@ async def generate_questions(request: GenerateQuestionsRequest):
     # Truncate JD if over 3000 chars
     if job_description and len(job_description) > 3000:
         job_description = job_description[:3000]
+
+    # Sanitize JD for prompt injection patterns
+    if job_description:
+        original = job_description
+        job_description = sanitize_jd(job_description)
+        if job_description != original:
+            print(f"[SECURITY] JD sanitization stripped content. session_id={request.session_id}")
 
     # Extract company name from JD
     company_name = extract_company_name(job_description) if job_description else None
