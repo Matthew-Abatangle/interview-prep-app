@@ -136,3 +136,89 @@ async def update_session(session_id: str, request: Request, body: UpdateSessionR
         raise HTTPException(status_code=500, detail="Failed to update session.")
 
     return {"session_id": session_id, "feedback_timing": body.feedback_timing}
+
+
+@router.get("/api/sessions")
+async def get_user_sessions(request: Request):
+    user_id = request.state.user["sub"]
+    db = get_supabase()
+    sessions_res = db.table("sessions") \
+        .select("id, job_title, company_name, source, status, completed_at") \
+        .eq("user_id", user_id) \
+        .eq("status", "completed") \
+        .order("completed_at", desc=True) \
+        .execute()
+    sessions = sessions_res.data or []
+    if not sessions:
+        return {"sessions": []}
+    session_ids = [s["id"] for s in sessions]
+    debrief_res = db.table("session_debrief") \
+        .select("session_id, overall_score, star_avg") \
+        .in_("session_id", session_ids) \
+        .execute()
+    debrief_map = {d["session_id"]: d for d in (debrief_res.data or [])}
+    for s in sessions:
+        d = debrief_map.get(s["id"], {})
+        s["overall_score"] = d.get("overall_score")
+        s["star_avg"] = d.get("star_avg")
+    return {"sessions": sessions}
+
+
+@router.get("/api/sessions/today-count")
+async def get_today_session_count(request: Request):
+    user_id = request.state.user["sub"]
+    db = get_supabase()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    res = db.table("sessions") \
+        .select("id") \
+        .eq("user_id", user_id) \
+        .gte("created_at", f"{today}T00:00:00Z") \
+        .lte("created_at", f"{today}T23:59:59Z") \
+        .execute()
+    return {"count": len(res.data or []), "limit": 3}
+
+
+@router.get("/api/sessions/{session_id}/detail")
+async def get_session_detail(session_id: str, request: Request):
+    user_id = request.state.user["sub"]
+    db = get_supabase()
+
+    session_res = db.table("sessions").select("*").eq("id", session_id).eq("user_id", user_id).execute()
+    if not session_res.data:
+        raise HTTPException(status_code=403, detail="Session not found or access denied.")
+    session = session_res.data[0]
+
+    questions_res = db.table("session_questions").select("*").eq("session_id", session_id).execute()
+    questions = questions_res.data or []
+
+    debrief_res = db.table("session_debrief").select("*").eq("session_id", session_id).execute()
+    if not debrief_res.data:
+        raise HTTPException(status_code=404, detail="Debrief not found for this session.")
+    debrief = debrief_res.data[0]
+
+    responses_res = db.table("session_responses").select("*").eq("session_id", session_id).execute()
+    responses = responses_res.data or []
+    response_map = {r["question_id"]: r for r in responses}
+
+    per_q = debrief.get("per_question_scores") or []
+    for q in per_q:
+        r = response_map.get(q.get("id"), {})
+        q["filler_word_count"] = r.get("filler_word_count", 0)
+        q["words_per_minute"] = r.get("words_per_minute", 0)
+        q["answer_duration_seconds"] = r.get("answer_duration_seconds", 0)
+
+    return {
+        "session_id": session_id,
+        "overall_score": debrief["overall_score"],
+        "dimension_averages": {
+            "star": debrief.get("star_avg"),
+            "content": debrief.get("content_avg"),
+            "relevance": debrief.get("relevance_avg"),
+            "jd_alignment": debrief.get("jd_alignment_avg"),
+        },
+        "top_weaknesses": debrief.get("top_weaknesses", []),
+        "summary_text": debrief.get("summary_text", ""),
+        "questions": per_q,
+        "session_source": session.get("source", "jd"),
+        "session_questions": questions,
+    }

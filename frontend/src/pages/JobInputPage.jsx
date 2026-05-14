@@ -28,7 +28,7 @@ function extractCompanyName(jd) {
   return null;
 }
 
-export default function JobInputPage({ onSuccess, onSignOut }) {
+export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [presetRole, setPresetRole] = useState("");
@@ -142,15 +142,26 @@ export default function JobInputPage({ onSuccess, onSignOut }) {
           <p className="text-gray-400 text-base">
             Enter your job details to generate personalized behavioral questions.
           </p>
-          {onSignOut && (
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="absolute top-0 right-0 text-slate-400 hover:text-white text-sm transition-colors duration-150"
-            >
-              Sign out
-            </button>
-          )}
+          <div className="absolute top-0 right-0 flex items-center gap-3">
+            {onGoToAccount && (
+              <button
+                type="button"
+                onClick={onGoToAccount}
+                className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
+              >
+                Dashboard
+              </button>
+            )}
+            {onSignOut && (
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="text-sm text-slate-400 hover:text-white transition-colors duration-150"
+              >
+                Sign out
+              </button>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-8">
