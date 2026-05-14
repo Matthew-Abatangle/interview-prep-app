@@ -154,22 +154,19 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
       <div className="w-full max-w-2xl animate-fade-up space-y-8">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1" />
-          <div className="flex-1 text-center">
-            <h1 className="text-3xl font-bold text-white mb-1">Your Dashboard</h1>
-            <p className="text-gray-400 text-sm">Track your progress and review past sessions.</p>
-          </div>
-          <div className="flex-1 flex items-center justify-end gap-3 pt-1">
+        <div className="relative text-center">
+          <h1 className="text-3xl font-bold text-white mb-1">Your Dashboard</h1>
+          <p className="text-gray-400 text-sm">Track your progress and review past sessions.</p>
+          <div className="absolute top-0 right-0 flex items-center gap-2">
             <button
               onClick={onStartNew}
-              className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
+              className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors duration-150"
             >
               New Session
             </button>
             <button
               onClick={onSignOut}
-              className="text-sm text-slate-400 hover:text-white transition-colors duration-150"
+              className="text-sm font-medium bg-gray-700 hover:bg-gray-600 text-white px-4 py-1.5 rounded-lg transition-colors duration-150"
             >
               Sign out
             </button>

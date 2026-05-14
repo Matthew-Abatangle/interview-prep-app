@@ -77,10 +77,10 @@ function AppInner() {
           setViewingSession(null);
           setPage("account_home");
         }}
-        onGoToHistory={viewingSession.returnTo === "session_history" ? () => {
+        onGoToHistory={() => {
           setViewingSession(null);
           setPage("session_history");
-        } : null}
+        }}
       />
     );
   }
