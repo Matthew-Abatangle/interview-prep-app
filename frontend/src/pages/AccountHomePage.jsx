@@ -186,12 +186,15 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
         )}
 
         {!loading && error && (
-          <p className="text-red-400 text-sm text-center">{error}</p>
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <p className="text-white font-medium">We couldn't load your dashboard.</p>
+            <p className="text-gray-400 text-sm">Try refreshing the page.</p>
+          </div>
         )}
 
         {!loading && !error && (
           <>
-            {/* Stat cards */}
+            {/* Stat cards — always shown */}
             <div className="grid grid-cols-3 gap-4">
               <StatCard label="Sessions Completed" value={totalSessions} />
               <StatCard label="Average Score" value={avgScore} sub="out of 10" />
@@ -202,42 +205,44 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
               />
             </div>
 
-            {/* Trend graph */}
-            <TrendGraph sessions={sessions} />
+            {/* Empty state — replaces graph + session list */}
+            {sessions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <p className="text-xl font-semibold text-white">No sessions yet.</p>
+                <p className="text-gray-400 text-sm">Start your first interview to see your progress here.</p>
+                <button
+                  onClick={onStartNew}
+                  className="mt-2 px-6 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-500"
+                >
+                  Start Your First Interview
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Trend graph */}
+                <TrendGraph sessions={sessions} />
 
-            {/* Recent sessions */}
-            <div>
-              <h2 className="text-base font-semibold text-white text-center mb-3">Recent Sessions</h2>
-
-              {recent3.length === 0 ? (
-                <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 text-center">
-                  <p className="text-gray-400 text-sm mb-4">No completed sessions yet.</p>
-                  <button
-                    onClick={onStartNew}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors duration-150"
-                  >
-                    Start Your First Session
-                  </button>
+                {/* Recent sessions */}
+                <div>
+                  <h2 className="text-base font-semibold text-white text-center mb-3">Recent Sessions</h2>
+                  <div className="space-y-3">
+                    {recent3.map(s => (
+                      <SessionRow key={s.id} session={s} onClick={onViewSession} />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <div className="text-center mt-4">
+                      <button
+                        onClick={onViewAll}
+                        className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
+                      >
+                        View all sessions →
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {recent3.map(s => (
-                    <SessionRow key={s.id} session={s} onClick={onViewSession} />
-                  ))}
-                </div>
-              )}
-
-              {hasMore && (
-                <div className="text-center mt-4">
-                  <button
-                    onClick={onViewAll}
-                    className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
-                  >
-                    View all sessions →
-                  </button>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </>
         )}
       </div>

@@ -40,6 +40,13 @@ INJECTION_PATTERNS = [
     r'override\s+(your\s+|all\s+)?',
 ]
 
+def _cleanup_session(session_id: str) -> None:
+    try:
+        get_supabase().table("sessions").delete().eq("id", session_id).execute()
+    except Exception as e:
+        print(f"[WARNING] Failed to delete orphaned session {session_id}: {e}")
+
+
 def sanitize_jd(text: str) -> str:
     for pattern in INJECTION_PATTERNS:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE)
@@ -244,12 +251,14 @@ async def generate_questions(request: GenerateQuestionsRequest):
             break
         except (ValueError, json.JSONDecodeError) as e:
             if attempt == 1:
+                _cleanup_session(request.session_id)
                 raise HTTPException(
                     status_code=500,
                     detail="We had trouble generating questions for this role. Please try again or adjust your job description."
                 )
 
     if parsed is None or "questions" not in parsed:
+        _cleanup_session(request.session_id)
         raise HTTPException(
             status_code=500,
             detail="We had trouble generating questions for this role. Please try again or adjust your job description."
@@ -260,6 +269,7 @@ async def generate_questions(request: GenerateQuestionsRequest):
 
     # Check we have enough valid questions
     if len(questions) < 3:
+        _cleanup_session(request.session_id)
         raise HTTPException(
             status_code=500,
             detail="We had trouble generating questions for this role. Please try again or adjust your job description."

@@ -116,6 +116,32 @@ async def transcribe_audio(
 
         transcript_text = poll_data.get("text") or ""
 
+        # Short-answer / silence detection
+        word_count = len(transcript_text.strip().split()) if transcript_text else 0
+        is_na = word_count < 10
+
+        if is_na:
+            try:
+                get_supabase().table("session_responses").upsert({
+                    "session_id": session_id,
+                    "question_id": question_id,
+                    "transcript": "",
+                    "filler_word_count": 0,
+                    "words_per_minute": 0,
+                    "answer_duration_seconds": 0,
+                    "is_na": True
+                }, on_conflict="session_id,question_id").execute()
+            except Exception as e:
+                print(f"[WARNING] Failed to write is_na session_responses row: {e}")
+            return {
+                "session_id": session_id,
+                "question_id": question_id,
+                "transcript": "",
+                "filler_word_count": 0,
+                "words_per_minute": 0,
+                "answer_duration_seconds": 0
+            }
+
         # Filler word count — post-processing pass on transcript text
         filler_word_count = 0
         try:
@@ -159,7 +185,8 @@ async def transcribe_audio(
             "transcript": transcript_text,
             "filler_word_count": filler_word_count,
             "words_per_minute": words_per_minute,
-            "answer_duration_seconds": answer_duration_seconds
+            "answer_duration_seconds": answer_duration_seconds,
+            "is_na": False
         }, on_conflict="session_id,question_id").execute()
     except Exception as e:
         print(f"[WARNING] Failed to write session_responses to Supabase: {e}")

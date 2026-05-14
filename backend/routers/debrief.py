@@ -128,7 +128,7 @@ OUTPUT RULES
 - Do not hallucinate content. If the transcript is vague, score it as vague."""
 
 
-def build_user_prompt(session, questions, responses):
+def build_user_prompt(session, questions, responses, na_ids=None):
     job_title = session.get("job_title", "")
     company_name = session.get("company_name")
     job_description = session.get("job_description")
@@ -163,13 +163,16 @@ def build_user_prompt(session, questions, responses):
     lines.append("QUESTIONS AND RESPONSES")
     lines.append("")
 
+    if na_ids is None:
+        na_ids = set()
+
     # Match responses by question_id
     response_map = {r["question_id"]: r for r in responses}
 
     for q in sorted(questions, key=lambda x: x["question_id"]):
         qid = q["question_id"]
         r = response_map.get(qid, {})
-        transcript = r.get("transcript") or ""
+        transcript = "[No answer was recorded]" if qid in na_ids else (r.get("transcript") or "")
         filler = r.get("filler_word_count", 0)
         wpm = r.get("words_per_minute", 0)
         duration = r.get("answer_duration_seconds", 0)
@@ -193,14 +196,18 @@ def build_user_prompt(session, questions, responses):
     return "\n".join(lines)
 
 
-def compute_dimension_averages(questions_out, session_source):
-    star_scores = [q["star_score"] for q in questions_out if q.get("star_score") is not None]
-    content_scores = [q["content_score"] for q in questions_out if q.get("content_score") is not None]
-    relevance_scores = [q["relevance_score"] for q in questions_out if q.get("relevance_score") is not None]
-    jd_scores = [q["jd_alignment_score"] for q in questions_out if q.get("jd_alignment_score") is not None]
+def compute_dimension_averages(questions_out, session_source, na_ids=None):
+    if na_ids is None:
+        na_ids = set()
+    non_na = [q for q in questions_out if q.get("id") not in na_ids]
 
     def avg(lst):
-        return round(sum(lst) / len(lst), 1) if lst else None
+        return round(sum(lst) / len(lst), 1) if lst else 0.0
+
+    star_scores = [q["star_score"] for q in non_na if q.get("star_score") is not None]
+    content_scores = [q["content_score"] for q in non_na if q.get("content_score") is not None]
+    relevance_scores = [q["relevance_score"] for q in non_na if q.get("relevance_score") is not None]
+    jd_scores = [q["jd_alignment_score"] for q in non_na if q.get("jd_alignment_score") is not None]
 
     return {
         "star": avg(star_scores),
@@ -346,8 +353,11 @@ async def generate_debrief(body: DebriefRequest, request: Request):
             detail="Not all answers have been processed yet. Please wait a moment and try again."
         )
 
+    # Identify N/A questions (silent / too short)
+    na_ids = {r["question_id"] for r in responses if r.get("is_na")}
+
     # Build prompt and call LLM (with one retry)
-    user_prompt = build_user_prompt(session, questions, responses)
+    user_prompt = build_user_prompt(session, questions, responses, na_ids=na_ids)
     session_source = session.get("source", "jd")
 
     parsed = None
@@ -365,6 +375,17 @@ async def generate_debrief(body: DebriefRequest, request: Request):
                 )
 
     questions_out = parsed["questions"]
+
+    # Override scores for N/A questions
+    for q in questions_out:
+        if q.get("id") in na_ids:
+            q["star_score"] = 0.0
+            q["content_score"] = 0.0
+            q["relevance_score"] = 0.0
+            q["jd_alignment_score"] = None if session_source == "preset" else 0.0
+            q["composite_score"] = 0.0
+            q["written_feedback"] = "No answer was recorded for this question."
+
     # Merge audio metrics from session_responses into each question output
     response_map = {r["question_id"]: r for r in responses}
     for q in questions_out:
@@ -372,10 +393,14 @@ async def generate_debrief(body: DebriefRequest, request: Request):
         q["filler_word_count"] = r.get("filler_word_count", 0)
         q["words_per_minute"] = r.get("words_per_minute", 0)
         q["answer_duration_seconds"] = r.get("answer_duration_seconds", 0)
-    overall_score = parsed["overall_score"]
+
     top_weaknesses = parsed["top_weaknesses"]
     summary_text = parsed["summary_text"]
-    dim_avgs = compute_dimension_averages(questions_out, session_source)
+    dim_avgs = compute_dimension_averages(questions_out, session_source, na_ids=na_ids)
+
+    # Recompute overall_score excluding N/A questions
+    non_na_composites = [q["composite_score"] for q in questions_out if q.get("id") not in na_ids and q.get("composite_score") is not None]
+    overall_score = round(sum(non_na_composites) / len(non_na_composites), 1) if non_na_composites else 0.0
 
     # Write to session_debrief (non-blocking on failure)
     try:

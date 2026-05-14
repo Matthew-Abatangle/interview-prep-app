@@ -34,12 +34,18 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
   const [presetRole, setPresetRole] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [rateLimitHit, setRateLimitHit] = useState(false);
+
+  function clearErrors() {
+    setError(null);
+    setRateLimitHit(false);
+  }
 
   const jdActive = jobDescription.replace(/\s/g, "").length >= 50;
   const jdNonEmpty = jobDescription.trim().length > 0;
   const presetActive = Boolean(presetRole);
 
-  const submitDisabled = (!jdActive && !presetActive) || loading;
+  const submitDisabled = (!jdActive && !presetActive) || loading || rateLimitHit;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -47,6 +53,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
 
     setLoading(true);
     setError(null);
+    setRateLimitHit(false);
 
     const source = jdActive ? "jd" : "preset";
     const trimmedTitle = jdActive ? jobTitle.trim() : presetRole;
@@ -63,13 +70,13 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
       });
 
       if (sessionRes.status === 429) {
-        setError("You've reached your daily limit of 3 sessions. Come back tomorrow.");
+        setRateLimitHit(true);
         setLoading(false);
         return;
       }
 
       if (!sessionRes.ok) {
-        setError("Something went wrong starting your session. Please try again.");
+        setError("We had trouble generating your questions — give it another try.");
         setLoading(false);
         return;
       }
@@ -103,7 +110,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
             company_name: companyName ?? null,
           });
         } else {
-          setError("We had trouble generating questions. Please try again or adjust your job description.");
+          setError("We had trouble generating your questions — give it another try.");
         }
       } else {
         const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/preset-questions`, {
@@ -123,11 +130,11 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
             company_name: null,
           });
         } else {
-          setError("We had trouble loading questions for this role. Please try again.");
+          setError("We had trouble generating your questions — give it another try.");
         }
       }
     } catch {
-      setError("We had trouble generating questions. Please try again.");
+      setError("We had trouble generating your questions — give it another try.");
     } finally {
       setLoading(false);
     }
@@ -185,7 +192,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
                 required
                 placeholder="e.g. Investment Banking Analyst"
                 value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
+                onChange={(e) => { setJobTitle(e.target.value); clearErrors(); }}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
@@ -215,7 +222,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
                 <textarea
                   placeholder="Paste the full job description here..."
                   value={jobDescription}
-                  onChange={(e) => setJobDescription(e.target.value)}
+                  onChange={(e) => { setJobDescription(e.target.value); clearErrors(); }}
                   rows={7}
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
                   style={{ minHeight: "160px" }}
@@ -252,7 +259,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
               </div>
               <select
                 value={presetRole}
-                onChange={(e) => setPresetRole(e.target.value)}
+                onChange={(e) => { setPresetRole(e.target.value); clearErrors(); }}
                 className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="" disabled>Select a role...</option>
@@ -263,9 +270,12 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
             </div>
           </div>
 
-          {/* Error message */}
+          {/* Error messages */}
           {error && (
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-400 text-sm text-center mt-3">{error}</p>
+          )}
+          {rateLimitHit && (
+            <p className="text-yellow-400 text-sm text-center mt-3">You've completed 3 sessions today. Come back tomorrow to keep practicing.</p>
           )}
 
           {/* Submit */}

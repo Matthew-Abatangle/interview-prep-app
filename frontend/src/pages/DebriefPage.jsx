@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -140,12 +141,66 @@ function AccordionItem({ q, index, isOpen, onToggle, isJD, questionMap }) {
   );
 }
 
-export default function DebriefPage({ debriefData, sessionSource, sessionQuestions, onReset, onGoToAccount, onGoToHistory }) {
+export default function DebriefPage({ debriefData, session_id, sessionSource, sessionQuestions, onReset, onGoToAccount, onGoToHistory }) {
   const [openIndex, setOpenIndex] = useState(null);
+  const [localData, setLocalData] = useState(debriefData ?? null);
+  const [fetchError, setFetchError] = useState(false);
+  const [fetching, setFetching] = useState(false);
 
-  if (!debriefData) return null;
+  async function fetchDebrief() {
+    const sid = session_id || localData?.session_id;
+    if (!sid) { setFetchError(true); return; }
+    setFetching(true);
+    setFetchError(false);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const token = authSession?.access_token;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/debrief`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ session_id: sid }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setLocalData(data);
+    } catch {
+      setFetchError(true);
+    } finally {
+      setFetching(false);
+    }
+  }
 
-  const { overall_score, dimension_averages, top_weaknesses, summary_text, questions } = debriefData;
+  useEffect(() => {
+    if (!debriefData && session_id) {
+      fetchDebrief();
+    }
+  }, []);
+
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (fetchError || !localData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white gap-4">
+        <p className="text-lg font-medium">Something went wrong on our end.</p>
+        <p className="text-gray-400 text-sm">Your session is saved — give it another try.</p>
+        <button
+          onClick={fetchDebrief}
+          className="mt-2 px-6 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-500"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const { overall_score, dimension_averages, top_weaknesses, summary_text, questions } = localData;
+
   const isJD = sessionSource === "jd";
 
   const questionMap = (sessionQuestions ?? []).reduce((acc, q) => {

@@ -74,11 +74,17 @@ export default function SessionHistoryPage({ onViewSession, onBack }) {
         )}
 
         {!loading && error && (
-          <p className="text-red-400 text-sm text-center">{error}</p>
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <p className="text-white font-medium">We couldn't load your sessions.</p>
+            <p className="text-gray-400 text-sm">Try refreshing the page.</p>
+          </div>
         )}
 
         {!loading && !error && sessions.length === 0 && (
-          <p className="text-gray-400 text-sm text-center py-16">No completed sessions yet.</p>
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <p className="text-xl font-semibold text-white">No sessions yet.</p>
+            <p className="text-gray-400 text-sm">Complete your first interview to see it here.</p>
+          </div>
         )}
 
         {!loading && !error && sessions.length > 0 && (
