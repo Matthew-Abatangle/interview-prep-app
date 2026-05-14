@@ -150,27 +150,33 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
   const hasMore = sessions.length > 3;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Sticky nav bar */}
+      <div className="sticky top-0 z-50 h-14 bg-gray-900 border-b border-gray-800 px-6 flex items-center justify-between">
+        <span className="text-sm font-semibold text-white">Interview Prep</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onStartNew}
+            className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors duration-150"
+          >
+            New Session
+          </button>
+          <button
+            onClick={onSignOut}
+            className="text-sm font-medium bg-gray-700 hover:bg-gray-600 text-white px-4 py-1.5 rounded-lg transition-colors duration-150"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-start justify-center px-4 py-16">
       <div className="w-full max-w-2xl animate-fade-up space-y-8">
 
         {/* Header */}
-        <div className="relative text-center">
+        <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-1">Your Dashboard</h1>
           <p className="text-gray-400 text-sm">Track your progress and review past sessions.</p>
-          <div className="absolute top-0 right-0 flex items-center gap-2">
-            <button
-              onClick={onStartNew}
-              className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors duration-150"
-            >
-              New Session
-            </button>
-            <button
-              onClick={onSignOut}
-              className="text-sm font-medium bg-gray-700 hover:bg-gray-600 text-white px-4 py-1.5 rounded-lg transition-colors duration-150"
-            >
-              Sign out
-            </button>
-          </div>
         </div>
 
         {loading && (
@@ -234,6 +240,7 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   );
