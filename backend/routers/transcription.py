@@ -195,6 +195,29 @@ async def transcribe_audio(
         answer_duration_seconds = round(poll_data.get("audio_duration") or 0)
 
     except Exception as e:
+        error_message = str(e)
+        if "no spoken audio" in error_message.lower():
+            print(f"[NA] AssemblyAI detected no spoken audio — writing N/A row. session_id={session_id}, question_id={question_id}")
+            try:
+                get_supabase().table("session_responses").upsert({
+                    "session_id": session_id,
+                    "question_id": question_id,
+                    "transcript": "",
+                    "filler_word_count": 0,
+                    "words_per_minute": 0,
+                    "answer_duration_seconds": 0,
+                    "is_na": True
+                }, on_conflict="session_id,question_id").execute()
+            except Exception as db_e:
+                print(f"[WARNING] Failed to write no-spoken-audio N/A row: {db_e}")
+            return {
+                "session_id": session_id,
+                "question_id": question_id,
+                "transcript": "",
+                "filler_word_count": 0,
+                "words_per_minute": 0,
+                "answer_duration_seconds": 0
+            }
         print(f"[ERROR] AssemblyAI transcription failed: {e}")
         raise HTTPException(
             status_code=500,
