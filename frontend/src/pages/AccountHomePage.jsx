@@ -15,7 +15,7 @@ function TrendGraph({ sessions }) {
   if (!sessions || sessions.length < 2) {
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 flex items-center justify-center min-h-[160px]">
-        <p className="text-gray-500 text-sm">Complete at least 2 sessions to see your trend.</p>
+        <p className="text-gray-500 text-sm">Complete at least 2 more sessions to see your trend.</p>
       </div>
     );
   }

@@ -64,6 +64,30 @@ async def transcribe_audio(
     # Read audio bytes
     audio_bytes = await audio.read()
 
+    # Pre-flight N/A check — skip AssemblyAI entirely for empty/silent blobs
+    MIN_AUDIO_BYTES = 1000  # under 1KB is effectively silent/empty
+    if len(audio_bytes) < MIN_AUDIO_BYTES:
+        try:
+            get_supabase().table("session_responses").upsert({
+                "session_id": session_id,
+                "question_id": question_id,
+                "transcript": "",
+                "filler_word_count": 0,
+                "words_per_minute": 0,
+                "answer_duration_seconds": 0,
+                "is_na": True
+            }, on_conflict="session_id,question_id").execute()
+        except Exception as e:
+            print(f"[WARNING] Failed to write empty-blob N/A row: {e}")
+        return {
+            "session_id": session_id,
+            "question_id": question_id,
+            "transcript": "",
+            "filler_word_count": 0,
+            "words_per_minute": 0,
+            "answer_duration_seconds": 0
+        }
+
     # Transcribe via AssemblyAI REST API
     try:
         api_key = os.getenv("ASSEMBLYAI_API_KEY")
