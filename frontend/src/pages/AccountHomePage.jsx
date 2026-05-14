@@ -154,15 +154,18 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
       <div className="w-full max-w-2xl animate-fade-up space-y-8">
 
         {/* Header */}
-        <div className="relative text-center">
-          <h1 className="text-3xl font-bold text-white mb-1">Your Dashboard</h1>
-          <p className="text-gray-400 text-sm">Track your progress and review past sessions.</p>
-          <div className="absolute top-0 right-0 flex items-center gap-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1" />
+          <div className="flex-1 text-center">
+            <h1 className="text-3xl font-bold text-white mb-1">Your Dashboard</h1>
+            <p className="text-gray-400 text-sm">Track your progress and review past sessions.</p>
+          </div>
+          <div className="flex-1 flex items-center justify-end gap-3 pt-1">
             <button
               onClick={onStartNew}
               className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
             >
-              Start New Session
+              New Session
             </button>
             <button
               onClick={onSignOut}
@@ -201,17 +204,7 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
 
             {/* Recent sessions */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-semibold text-white">Recent Sessions</h2>
-                {hasMore && (
-                  <button
-                    onClick={onViewAll}
-                    className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
-                  >
-                    View all →
-                  </button>
-                )}
-              </div>
+              <h2 className="text-base font-semibold text-white text-center mb-3">Recent Sessions</h2>
 
               {recent3.length === 0 ? (
                 <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 text-center">
@@ -228,6 +221,17 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
                   {recent3.map(s => (
                     <SessionRow key={s.id} session={s} onClick={onViewSession} />
                   ))}
+                </div>
+              )}
+
+              {hasMore && (
+                <div className="text-center mt-4">
+                  <button
+                    onClick={onViewAll}
+                    className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors duration-150"
+                  >
+                    View all sessions →
+                  </button>
                 </div>
               )}
             </div>

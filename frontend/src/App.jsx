@@ -71,8 +71,16 @@ function AppInner() {
         sessionQuestions={viewingSession.questions}
         onReset={() => {
           setViewingSession(null);
-          setPage(viewingSession.returnTo || "account_home");
+          setPage("home");
         }}
+        onGoToAccount={() => {
+          setViewingSession(null);
+          setPage("account_home");
+        }}
+        onGoToHistory={viewingSession.returnTo === "session_history" ? () => {
+          setViewingSession(null);
+          setPage("session_history");
+        } : null}
       />
     );
   }

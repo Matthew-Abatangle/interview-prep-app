@@ -57,10 +57,10 @@ export default function SessionHistoryPage({ onViewSession, onBack }) {
     <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
       <div className="w-full max-w-2xl animate-fade-up space-y-6">
 
-        <div className="flex items-center gap-4">
+        <div className="relative flex items-center justify-center">
           <button
             onClick={onBack}
-            className="text-gray-400 hover:text-white text-sm transition-colors duration-150"
+            className="absolute left-0 text-gray-400 hover:text-white text-sm transition-colors duration-150"
           >
             ← Back
           </button>

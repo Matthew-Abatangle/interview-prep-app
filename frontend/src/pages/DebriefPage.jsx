@@ -140,7 +140,7 @@ function AccordionItem({ q, index, isOpen, onToggle, isJD, questionMap }) {
   );
 }
 
-export default function DebriefPage({ debriefData, sessionSource, sessionQuestions, onReset, onGoToAccount }) {
+export default function DebriefPage({ debriefData, sessionSource, sessionQuestions, onReset, onGoToAccount, onGoToHistory }) {
   const [openIndex, setOpenIndex] = useState(null);
 
   if (!debriefData) return null;
@@ -213,7 +213,7 @@ export default function DebriefPage({ debriefData, sessionSource, sessionQuestio
           ))}
         </div>
 
-        <div className="flex items-center justify-center gap-4 mt-8">
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
           <button
             type="button"
             onClick={onReset}
@@ -221,13 +221,22 @@ export default function DebriefPage({ debriefData, sessionSource, sessionQuestio
           >
             Start New Session
           </button>
+          {onGoToHistory && (
+            <button
+              type="button"
+              onClick={onGoToHistory}
+              className="bg-gray-700 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-150"
+            >
+              All Sessions
+            </button>
+          )}
           {onGoToAccount && (
             <button
               type="button"
               onClick={onGoToAccount}
               className="bg-gray-700 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-150"
             >
-              View Dashboard
+              Account Dashboard
             </button>
           )}
         </div>
