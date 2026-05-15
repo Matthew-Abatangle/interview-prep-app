@@ -25,6 +25,7 @@ function AppInner() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [modalTriggeredFromDebrief, setModalTriggeredFromDebrief] = useState(false);
+  const [lastModalShownDate, setLastModalShownDate] = useState(null);
 
   const handleSignOut = async () => {
     await signOut();
@@ -35,6 +36,7 @@ function AppInner() {
     setViewingSession(null);
     setShowUpgradeModal(false);
     setShowUpgradeBanner(true);
+    setLastModalShownDate(null);
   };
 
   if (loading) {
@@ -101,8 +103,15 @@ function AppInner() {
           setDebriefData(null);
           setSessionData(null);
           setMediaStream(null);
-          setModalTriggeredFromDebrief(true);
-          setShowUpgradeModal(true);
+          const today = new Date().toDateString();
+          if (lastModalShownDate !== today) {
+            setLastModalShownDate(today);
+            setModalTriggeredFromDebrief(true);
+            setShowUpgradeModal(true);
+          } else {
+            // Already shown modal today — skip modal, just navigate home
+            setPage("home");
+          }
         }}
         onGoToAccount={() => {
           setDebriefData(null);
