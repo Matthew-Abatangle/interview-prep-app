@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const ROWS = [
-  { label: "Sessions per day",          free: "3",          pro: "Unlimited" },
+  { label: "Sessions per day",          free: "3",          pro: "15 sessions/day" },
   { label: "Full debrief + AI scoring", free: "check",      pro: "check" },
   { label: "Audio metrics",             free: "check",      pro: "check" },
   { label: "Session history",           free: "Last 3",     pro: "Full history" },
@@ -107,9 +107,9 @@ export default function UpgradeModal({ isOpen, onDismissX, onDismissContinue }) 
           onClick={() => setCtaClicked(true)}
           className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-colors duration-150 mt-2"
         >
-          Get Pro — $7.99/month
+          Get Pro — $4.99/month
         </button>
-        <p className="text-gray-400 text-xs text-center mt-1">or $64/year — save 33%</p>
+        <p className="text-gray-400 text-xs text-center mt-1">or $39/year — save 35%</p>
         {ctaClicked && (
           <p className="text-indigo-300 text-sm text-center mt-2">
             Coming soon — we'll notify you when Pro launches.
