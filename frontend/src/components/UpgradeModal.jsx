@@ -72,7 +72,7 @@ export default function UpgradeModal({ isOpen, onDismissX, onDismissContinue }) 
         </button>
 
         {/* Headline */}
-        <h2 className="text-xl font-bold text-white mb-1">You're putting in the work,</h2>
+        <h2 className="text-lg font-bold text-white mb-1">You're putting in the work,</h2>
         <h2 className="text-xl font-bold text-indigo-400 mb-4">Pro keeps up with you.</h2>
 
         {/* Tier comparison table */}
