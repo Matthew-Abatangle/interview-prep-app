@@ -29,7 +29,7 @@ function extractCompanyName(jd) {
   return null;
 }
 
-export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, showUpgradeBanner, onUpgradeClick, onDismissBanner }) {
+export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, showUpgradeBanner, onUpgradeClick, onDismiss }) {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [presetRole, setPresetRole] = useState("");
@@ -295,7 +295,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
       </div>
       </div>
       {showUpgradeBanner && (
-        <UpgradeBanner onUpgradeClick={onUpgradeClick} onDismiss={onDismissBanner} />
+        <UpgradeBanner onUpgradeClick={onUpgradeClick} onDismiss={onDismiss} />
       )}
     </div>
   );

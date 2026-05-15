@@ -179,7 +179,7 @@ function AppInner() {
         onViewAll={() => setPage("session_history")}
         showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
         onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
-        onDismissBanner={() => setShowUpgradeBanner(false)}
+        onDismiss={() => setShowUpgradeBanner(false)}
         onViewSession={async (session) => {
           try {
             const { data: { session: authSession } } = await (await import("./lib/supabaseClient")).supabase.auth.getSession();
@@ -261,7 +261,7 @@ function AppInner() {
         onGoToAccount={() => setPage("account_home")}
         showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
         onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
-        onDismissBanner={() => setShowUpgradeBanner(false)}
+        onDismiss={() => setShowUpgradeBanner(false)}
       />
     </>
   );

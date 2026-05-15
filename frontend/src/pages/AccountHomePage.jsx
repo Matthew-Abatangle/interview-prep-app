@@ -107,7 +107,7 @@ function SessionRow({ session, onClick }) {
   );
 }
 
-export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, onSignOut, showUpgradeBanner, onUpgradeClick, onDismissBanner }) {
+export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, onSignOut, showUpgradeBanner, onUpgradeClick, onDismiss }) {
   const [sessions, setSessions] = useState([]);
   const [todayCount, setTodayCount] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -249,7 +249,7 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
       </div>
       </div>
       {showUpgradeBanner && (
-        <UpgradeBanner onUpgradeClick={onUpgradeClick} onDismiss={onDismissBanner} />
+        <UpgradeBanner onUpgradeClick={onUpgradeClick} onDismiss={onDismiss} />
       )}
     </div>
   );
