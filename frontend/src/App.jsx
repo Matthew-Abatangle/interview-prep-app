@@ -33,6 +33,8 @@ function AppInner() {
     setMediaStream(null);
     setDebriefData(null);
     setViewingSession(null);
+    setShowUpgradeModal(false);
+    setShowUpgradeBanner(true);
   };
 
   if (loading) {
@@ -67,9 +69,10 @@ function AppInner() {
     );
   }
 
-  // Past session debrief view (read-only, from account home or session history)
+  let pageContent;
+
   if (page === "past_debrief" && viewingSession) {
-    return (
+    pageContent = (
       <DebriefPage
         debriefData={viewingSession.debriefData}
         sessionSource={viewingSession.source}
@@ -88,11 +91,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  // Live debrief after completing a session
-  if (page === "debrief" && debriefData) {
-    return (
+  } else if (page === "debrief" && debriefData) {
+    pageContent = (
       <DebriefPage
         debriefData={debriefData}
         sessionSource={sessionData?.source}
@@ -112,10 +112,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  if (page === "recording" && sessionData && mediaStream) {
-    return (
+  } else if (page === "recording" && sessionData && mediaStream) {
+    pageContent = (
       <RecordingPage
         session_id={sessionData.session_id}
         questions={sessionData.questions}
@@ -131,10 +129,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  if (page === "pre_interview" && sessionData && mediaStream) {
-    return (
+  } else if (page === "pre_interview" && sessionData && mediaStream) {
+    pageContent = (
       <PreInterviewPage
         session_id={sessionData.session_id}
         feedback_timing={sessionData.feedback_timing}
@@ -145,10 +141,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  if (page === "permissions" && sessionData) {
-    return (
+  } else if (page === "permissions" && sessionData) {
+    pageContent = (
       <PermissionPage
         onGranted={(stream) => {
           setMediaStream(stream);
@@ -156,10 +150,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  if (page === "questions_ready" && sessionData) {
-    return (
+  } else if (page === "questions_ready" && sessionData) {
+    pageContent = (
       <QuestionsReadyPage
         sessionData={sessionData}
         onStartInterview={() => setPage("permissions")}
@@ -169,10 +161,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  if (page === "account_home") {
-    return (
+  } else if (page === "account_home") {
+    pageContent = (
       <AccountHomePage
         onStartNew={() => setPage("home")}
         onSignOut={handleSignOut}
@@ -203,10 +193,8 @@ function AppInner() {
         }}
       />
     );
-  }
-
-  if (page === "session_history") {
-    return (
+  } else if (page === "session_history") {
+    pageContent = (
       <SessionHistoryPage
         onBack={() => setPage("account_home")}
         onViewSession={async (session) => {
@@ -232,9 +220,22 @@ function AppInner() {
         }}
       />
     );
+  } else {
+    pageContent = (
+      <JobInputPage
+        onSuccess={(data) => {
+          setSessionData({ ...data, feedback_timing: "live" });
+          setPage("questions_ready");
+        }}
+        onSignOut={handleSignOut}
+        onGoToAccount={() => setPage("account_home")}
+        showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
+        onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
+        onDismiss={() => setShowUpgradeBanner(false)}
+      />
+    );
   }
 
-  // Default authenticated view — JobInputPage
   return (
     <>
       <UpgradeModal
@@ -252,17 +253,7 @@ function AppInner() {
           setModalTriggeredFromDebrief(false);
         }}
       />
-      <JobInputPage
-        onSuccess={(data) => {
-          setSessionData({ ...data, feedback_timing: "live" });
-          setPage("questions_ready");
-        }}
-        onSignOut={handleSignOut}
-        onGoToAccount={() => setPage("account_home")}
-        showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
-        onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
-        onDismiss={() => setShowUpgradeBanner(false)}
-      />
+      {pageContent}
     </>
   );
 }
