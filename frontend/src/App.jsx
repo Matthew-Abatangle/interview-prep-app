@@ -248,7 +248,7 @@ function AppInner() {
         }}
         onDismissContinue={() => {
           setShowUpgradeModal(false);
-          setShowUpgradeBanner(true);
+          setShowUpgradeBanner(false);
           if (modalTriggeredFromDebrief) setPage("home");
           setModalTriggeredFromDebrief(false);
         }}
