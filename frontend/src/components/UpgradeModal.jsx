@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const ROWS = [
-  { label: "Sessions per day",          free: "3",          pro: "15 sessions/day" },
+  { label: "Sessions per day",          free: "3",          pro: "15" },
   { label: "Full debrief + AI scoring", free: "check",      pro: "check" },
   { label: "Audio metrics",             free: "check",      pro: "check" },
   { label: "Session history",           free: "Last 3",     pro: "Full history" },
