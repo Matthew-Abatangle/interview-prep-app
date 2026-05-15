@@ -24,6 +24,7 @@ function AppInner() {
   const [viewingSession, setViewingSession] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
+  const [modalTriggeredFromDebrief, setModalTriggeredFromDebrief] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -100,6 +101,7 @@ function AppInner() {
           setDebriefData(null);
           setSessionData(null);
           setMediaStream(null);
+          setModalTriggeredFromDebrief(true);
           setShowUpgradeModal(true);
         }}
         onGoToAccount={() => {
@@ -176,7 +178,7 @@ function AppInner() {
         onSignOut={handleSignOut}
         onViewAll={() => setPage("session_history")}
         showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
-        onUpgradeClick={() => setShowUpgradeModal(true)}
+        onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
         onDismissBanner={() => setShowUpgradeBanner(false)}
         onViewSession={async (session) => {
           try {
@@ -240,12 +242,14 @@ function AppInner() {
         onDismissX={() => {
           setShowUpgradeModal(false);
           setShowUpgradeBanner(false);
-          if (page === "debrief") setPage("home");
+          if (modalTriggeredFromDebrief) setPage("home");
+          setModalTriggeredFromDebrief(false);
         }}
         onDismissContinue={() => {
           setShowUpgradeModal(false);
-          setShowUpgradeBanner(false);
-          if (page === "debrief") setPage("home");
+          setShowUpgradeBanner(true);
+          if (modalTriggeredFromDebrief) setPage("home");
+          setModalTriggeredFromDebrief(false);
         }}
       />
       <JobInputPage
@@ -256,7 +260,7 @@ function AppInner() {
         onSignOut={handleSignOut}
         onGoToAccount={() => setPage("account_home")}
         showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
-        onUpgradeClick={() => setShowUpgradeModal(true)}
+        onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
         onDismissBanner={() => setShowUpgradeBanner(false)}
       />
     </>
