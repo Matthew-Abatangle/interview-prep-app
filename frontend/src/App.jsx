@@ -24,7 +24,7 @@ function AppInner() {
   const [viewingSession, setViewingSession] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
-  const [modalTriggeredFromDebrief, setModalTriggeredFromDebrief] = useState(false);
+  const [postDebriefDestination, setPostDebriefDestination] = useState(null);
   const [lastModalShownDate, setLastModalShownDate] = useState(null);
 
   const handleSignOut = async () => {
@@ -37,6 +37,7 @@ function AppInner() {
     setShowUpgradeModal(false);
     setShowUpgradeBanner(true);
     setLastModalShownDate(null);
+    setPostDebriefDestination(null);
   };
 
   if (loading) {
@@ -106,7 +107,7 @@ function AppInner() {
           const today = new Date().toDateString();
           if (lastModalShownDate !== today) {
             setLastModalShownDate(today);
-            setModalTriggeredFromDebrief(true);
+            setPostDebriefDestination("home");
             setShowUpgradeModal(true);
           } else {
             // Already shown modal today — skip modal, just navigate home
@@ -117,7 +118,14 @@ function AppInner() {
           setDebriefData(null);
           setSessionData(null);
           setMediaStream(null);
-          setPage("account_home");
+          const today = new Date().toDateString();
+          if (lastModalShownDate !== today) {
+            setLastModalShownDate(today);
+            setPostDebriefDestination("account_home");
+            setShowUpgradeModal(true);
+          } else {
+            setPage("account_home");
+          }
         }}
       />
     );
@@ -177,7 +185,7 @@ function AppInner() {
         onSignOut={handleSignOut}
         onViewAll={() => setPage("session_history")}
         showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
-        onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
+        onUpgradeClick={() => { setPostDebriefDestination(null); setShowUpgradeModal(true); }}
         onDismiss={() => setShowUpgradeBanner(false)}
         onViewSession={async (session) => {
           try {
@@ -239,7 +247,7 @@ function AppInner() {
         onSignOut={handleSignOut}
         onGoToAccount={() => setPage("account_home")}
         showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
-        onUpgradeClick={() => { setModalTriggeredFromDebrief(false); setShowUpgradeModal(true); }}
+        onUpgradeClick={() => { setPostDebriefDestination(null); setShowUpgradeModal(true); }}
         onDismiss={() => setShowUpgradeBanner(false)}
       />
     );
@@ -252,14 +260,14 @@ function AppInner() {
         onDismissX={() => {
           setShowUpgradeModal(false);
           setShowUpgradeBanner(false);
-          if (modalTriggeredFromDebrief) setPage("home");
-          setModalTriggeredFromDebrief(false);
+          if (postDebriefDestination) setPage(postDebriefDestination);
+          setPostDebriefDestination(null);
         }}
         onDismissContinue={() => {
           setShowUpgradeModal(false);
           setShowUpgradeBanner(false);
-          if (modalTriggeredFromDebrief) setPage("home");
-          setModalTriggeredFromDebrief(false);
+          if (postDebriefDestination) setPage(postDebriefDestination);
+          setPostDebriefDestination(null);
         }}
       />
       {pageContent}
