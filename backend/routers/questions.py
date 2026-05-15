@@ -223,7 +223,7 @@ class GenerateQuestionsRequest(BaseModel):
 
 
 class GenerateQuestionsResponse(BaseModel):
-    session_id: str
+    session_id: str | None = None
     source: str
     questions: list
     warning: str | None = None
