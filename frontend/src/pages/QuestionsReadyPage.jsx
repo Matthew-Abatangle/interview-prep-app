@@ -1,5 +1,25 @@
+import { useState } from "react";
+
 export default function QuestionsReadyPage({ sessionData, onStartInterview, onBack }) {
   const { job_title, company_name, source } = sessionData;
+  const [starting, setStarting] = useState(false);
+  const [sessionLimitError, setSessionLimitError] = useState(null);
+
+  async function handleStartClick() {
+    setStarting(true);
+    setSessionLimitError(null);
+    try {
+      await onStartInterview();
+    } catch (err) {
+      if (err.status === 429) {
+        setSessionLimitError("You've reached your daily session limit. Try again tomorrow.");
+      } else {
+        setSessionLimitError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setStarting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-16">
@@ -37,13 +57,23 @@ export default function QuestionsReadyPage({ sessionData, onStartInterview, onBa
           </p>
         </div>
 
+        {/* Session limit error */}
+        {sessionLimitError && (
+          <p className="text-yellow-400 text-sm text-center mb-4">{sessionLimitError}</p>
+        )}
+
         {/* Start Interview button */}
         <button
           type="button"
-          onClick={onStartInterview}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all duration-150 mb-6"
+          onClick={handleStartClick}
+          disabled={starting}
+          className={`w-full font-semibold py-3 rounded-lg transition-all duration-150 mb-6 ${
+            starting
+              ? "bg-indigo-800 text-indigo-400 cursor-not-allowed opacity-50"
+              : "bg-indigo-600 hover:bg-indigo-500 text-white"
+          }`}
         >
-          Start Interview
+          {starting ? "Starting..." : "Start Interview"}
         </button>
 
         {/* Start Over link */}

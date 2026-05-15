@@ -36,17 +36,19 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [rateLimitHit, setRateLimitHit] = useState(false);
+  const [genLimitHit, setGenLimitHit] = useState(false);
 
   function clearErrors() {
     setError(null);
     setRateLimitHit(false);
+    setGenLimitHit(false);
   }
 
   const jdActive = jobDescription.replace(/\s/g, "").length >= 50;
   const jdNonEmpty = jobDescription.trim().length > 0;
   const presetActive = Boolean(presetRole);
 
-  const submitDisabled = (!jdActive && !presetActive) || loading || rateLimitHit;
+  const submitDisabled = (!jdActive && !presetActive) || loading || rateLimitHit || genLimitHit;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -55,6 +57,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
     setLoading(true);
     setError(null);
     setRateLimitHit(false);
+    setGenLimitHit(false);
 
     const source = jdActive ? "jd" : "preset";
     const trimmedTitle = jdActive ? jobTitle.trim() : presetRole;
@@ -64,26 +67,6 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
       const token = session?.access_token;
       const authHeader = { Authorization: `Bearer ${token}` };
 
-      const sessionRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ job_title: trimmedTitle, source }),
-      });
-
-      if (sessionRes.status === 429) {
-        setRateLimitHit(true);
-        setLoading(false);
-        return;
-      }
-
-      if (!sessionRes.ok) {
-        setError("We had trouble generating your questions — give it another try.");
-        setLoading(false);
-        return;
-      }
-
-      const { session_id } = await sessionRes.json();
-
       if (jdActive) {
         const trimmedJD = jobDescription.trim();
         const companyName = extractCompanyName(trimmedJD);
@@ -91,7 +74,6 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
         const body = {
           job_title: trimmedTitle,
           job_description: trimmedJD,
-          session_id,
         };
         if (companyName) body.company_name = companyName;
 
@@ -101,10 +83,14 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
           body: JSON.stringify(body),
         });
 
+        if (questionsRes.status === 429) {
+          setGenLimitHit(true);
+          return;
+        }
+
         if (questionsRes.ok) {
           const data = await questionsRes.json();
           onSuccess({
-            session_id: data.session_id,
             questions: data.questions,
             source: data.source,
             job_title: trimmedTitle,
@@ -117,14 +103,18 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
         const questionsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/preset-questions`, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader },
-          body: JSON.stringify({ preset_role: presetRole, session_id }),
+          body: JSON.stringify({ preset_role: presetRole }),
         });
+
+        if (questionsRes.status === 429) {
+          setGenLimitHit(true);
+          return;
+        }
 
         if (questionsRes.ok) {
           const data = await questionsRes.json();
           const roleLabel = PRESET_ROLES.find(r => r.value === presetRole)?.label ?? presetRole;
           onSuccess({
-            session_id: data.session_id,
             questions: data.questions,
             source: data.source,
             job_title: roleLabel,
@@ -277,6 +267,9 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, show
           )}
           {rateLimitHit && (
             <p className="text-yellow-400 text-sm text-center mt-3">You've completed 3 sessions today. Come back tomorrow to keep practicing.</p>
+          )}
+          {genLimitHit && (
+            <p className="text-yellow-400 text-sm text-center mt-3">You've reached your daily question generation limit. Try again tomorrow.</p>
           )}
 
           {/* Submit */}

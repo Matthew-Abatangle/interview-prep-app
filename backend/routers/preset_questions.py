@@ -27,7 +27,7 @@ with open(_PRESET_BANK_PATH, "r") as _f:
 
 class PresetQuestionsRequest(BaseModel):
     preset_role: str
-    session_id: str
+    session_id: str | None = None
 
 
 @router.post("/api/preset-questions")
@@ -39,21 +39,24 @@ async def get_preset_questions(body: PresetQuestionsRequest, request: Request):
             detail="We don't have preset questions for this role yet. Please paste a job description instead."
         )
 
-    rows = [
-        {
-            "session_id": body.session_id,
-            "question_id": q["id"],
-            "question_text": q["question"],
-            "competency": q["competency"],
-            "arc_position": q["arc_position"],
-            "source": "preset",
-        }
-        for q in questions
-    ]
-    try:
-        get_supabase().table("session_questions").insert(rows).execute()
-    except Exception as e:
-        print(f"[preset-questions] DB write failed: {e}")
+    # Write session_questions only when a session_id is provided.
+    # In the new flow, questions are written via POST /api/sessions at Start Interview time.
+    if body.session_id:
+        rows = [
+            {
+                "session_id": body.session_id,
+                "question_id": q["id"],
+                "question_text": q["question"],
+                "competency": q["competency"],
+                "arc_position": q["arc_position"],
+                "source": "preset",
+            }
+            for q in questions
+        ]
+        try:
+            get_supabase().table("session_questions").insert(rows).execute()
+        except Exception as e:
+            print(f"[preset-questions] DB write failed: {e}")
 
     return {
         "session_id": body.session_id,

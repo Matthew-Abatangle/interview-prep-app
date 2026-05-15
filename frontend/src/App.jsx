@@ -72,6 +72,32 @@ function AppInner() {
     );
   }
 
+  async function handleStartInterview() {
+    const { data: { session: authSession } } = await (await import("./lib/supabaseClient")).supabase.auth.getSession();
+    const token = authSession?.access_token;
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        job_title: sessionData.job_title,
+        source: sessionData.source,
+        company_name: sessionData.company_name ?? null,
+        questions: sessionData.questions,
+      }),
+    });
+    if (res.status === 429) {
+      const err = new Error("rate_limit");
+      err.status = 429;
+      throw err;
+    }
+    if (!res.ok) {
+      throw new Error("server_error");
+    }
+    const { session_id } = await res.json();
+    setSessionData((prev) => ({ ...prev, session_id }));
+    setPage("permissions");
+  }
+
   let pageContent;
 
   if (page === "past_debrief" && viewingSession) {
@@ -171,7 +197,7 @@ function AppInner() {
     pageContent = (
       <QuestionsReadyPage
         sessionData={sessionData}
-        onStartInterview={() => setPage("permissions")}
+        onStartInterview={handleStartInterview}
         onBack={() => {
           setSessionData(null);
           setPage("home");

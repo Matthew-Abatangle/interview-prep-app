@@ -1,7 +1,8 @@
 import os
 import re
 import json
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from openai import OpenAI
 from supabase import create_client
@@ -27,6 +28,21 @@ def get_supabase():
             os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         )
     return _supabase_client
+
+# TIER_LIMITS — single in-code source of truth for per-user daily limits.
+# Spec source of truth: Notion Security & Safety page, Section 3.
+# When Pro tier enforcement is added in V2, look up user's tier from the
+# Stripe subscription table and select the appropriate limits from this dict.
+# Do not hardcode these values anywhere else in the codebase.
+TIER_LIMITS = {
+    "free": {"sessions_per_day": 3, "question_generations_per_day": 10},
+    "pro":  {"sessions_per_day": 15, "question_generations_per_day": 50},
+}
+
+# V1: all users are Free tier
+def get_user_tier(user_id: str) -> str:
+    return "free"
+
 
 INJECTION_PATTERNS = [
     r'ignore\s+(all\s+|previous\s+|above\s+|your\s+)?instructions',
@@ -203,7 +219,7 @@ def call_llm(user_prompt: str) -> dict:
 class GenerateQuestionsRequest(BaseModel):
     job_title: str
     job_description: str | None = None
-    session_id: str
+    session_id: str | None = None
 
 
 class GenerateQuestionsResponse(BaseModel):
@@ -214,7 +230,31 @@ class GenerateQuestionsResponse(BaseModel):
 
 
 @router.post("/api/generate-questions", response_model=GenerateQuestionsResponse)
-async def generate_questions(request: GenerateQuestionsRequest):
+async def generate_questions(http_request: Request, request: GenerateQuestionsRequest):
+    # Auth: user set by AuthMiddleware
+    user = http_request.state.user
+
+    # Rate limit: check question_generations_per_day before LLM call
+    tier = get_user_tier(user["sub"])
+    daily_limit = TIER_LIMITS[tier]["question_generations_per_day"]
+    today = datetime.utcnow().date().isoformat()
+
+    try:
+        gen_count_resp = get_supabase().rpc("count_user_generations_today", {
+            "p_user_id": user["sub"],
+            "p_date": today
+        }).execute()
+        gen_count = gen_count_resp.data or 0
+    except Exception as e:
+        print(f"[WARNING] Failed to check question generation rate limit: {e}")
+        gen_count = 0
+
+    if gen_count >= daily_limit:
+        raise HTTPException(
+            status_code=429,
+            detail="You've reached your daily question generation limit. Try again tomorrow."
+        )
+
     # Input validation
     job_title = request.job_title.strip()
     if not job_title:
@@ -251,14 +291,16 @@ async def generate_questions(request: GenerateQuestionsRequest):
             break
         except (ValueError, json.JSONDecodeError) as e:
             if attempt == 1:
-                _cleanup_session(request.session_id)
+                if request.session_id:
+                    _cleanup_session(request.session_id)
                 raise HTTPException(
                     status_code=500,
                     detail="We had trouble generating questions for this role. Please try again or adjust your job description."
                 )
 
     if parsed is None or "questions" not in parsed:
-        _cleanup_session(request.session_id)
+        if request.session_id:
+            _cleanup_session(request.session_id)
         raise HTTPException(
             status_code=500,
             detail="We had trouble generating questions for this role. Please try again or adjust your job description."
@@ -269,7 +311,8 @@ async def generate_questions(request: GenerateQuestionsRequest):
 
     # Check we have enough valid questions
     if len(questions) < 3:
-        _cleanup_session(request.session_id)
+        if request.session_id:
+            _cleanup_session(request.session_id)
         raise HTTPException(
             status_code=500,
             detail="We had trouble generating questions for this role. Please try again or adjust your job description."
@@ -283,25 +326,26 @@ async def generate_questions(request: GenerateQuestionsRequest):
         all_warnings.extend(validation_warnings)
     warning_str = " | ".join(all_warnings) if all_warnings else None
 
-    # Write session_questions to Supabase
-    # Note: session row must already exist (created by session init endpoint — not yet built)
-    # For now, attempt the write and log failure without blocking the response
-    try:
-        rows = [
-            {
-                "session_id": request.session_id,
-                "question_id": q["id"],
-                "question_text": q["question"],
-                "competency": q["competency"],
-                "arc_position": q["arc_position"],
-                "source": source
-            }
-            for q in questions
-        ]
-        get_supabase().table("session_questions").insert(rows).execute()
-    except Exception as e:
-        # Log but do not block — storage failure should not break the session
-        print(f"[WARNING] Failed to write session_questions to Supabase: {e}")
+    # Write session_questions to Supabase only when a session_id is provided.
+    # In the new flow, session creation is deferred to Start Interview time;
+    # questions are written to session_questions via POST /api/sessions instead.
+    if request.session_id:
+        try:
+            rows = [
+                {
+                    "session_id": request.session_id,
+                    "question_id": q["id"],
+                    "question_text": q["question"],
+                    "competency": q["competency"],
+                    "arc_position": q["arc_position"],
+                    "source": source
+                }
+                for q in questions
+            ]
+            get_supabase().table("session_questions").insert(rows).execute()
+        except Exception as e:
+            # Log but do not block — storage failure should not break the session
+            print(f"[WARNING] Failed to write session_questions to Supabase: {e}")
 
     return GenerateQuestionsResponse(
         session_id=request.session_id,

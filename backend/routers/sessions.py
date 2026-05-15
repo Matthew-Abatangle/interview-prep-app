@@ -25,6 +25,10 @@ class CreateSessionRequest(BaseModel):
     source: str
     preset_role: str | None = None
     feedback_timing: str = "live"
+    # Questions to persist to session_questions at session creation time.
+    # In the new flow, question generation happens before session creation,
+    # so questions are passed here and stored in one atomic operation.
+    questions: list | None = None
 
 
 class CreateSessionResponse(BaseModel):
@@ -89,13 +93,33 @@ async def create_session(request: Request, body: CreateSessionRequest):
         }).execute()
 
         session_id = result.data[0]["id"]
-        return CreateSessionResponse(session_id=session_id)
 
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail="Failed to create session. Please try again."
         )
+
+    # Write session_questions if questions were provided with the session creation request.
+    # This supports the deferred-session flow where question generation precedes session creation.
+    if body.questions:
+        try:
+            rows = [
+                {
+                    "session_id": session_id,
+                    "question_id": q["id"],
+                    "question_text": q["question"],
+                    "competency": q.get("competency", ""),
+                    "arc_position": q.get("arc_position", ""),
+                    "source": body.source,
+                }
+                for q in body.questions
+            ]
+            get_supabase().table("session_questions").insert(rows).execute()
+        except Exception as e:
+            print(f"[WARNING] Failed to write session_questions during session creation: {e}")
+
+    return CreateSessionResponse(session_id=session_id)
 
 
 @router.patch("/api/sessions/{session_id}")
