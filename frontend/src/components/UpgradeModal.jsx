@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ROWS = [
   { label: "Sessions per day",          free: "3",          pro: "Unlimited" },
@@ -38,6 +38,17 @@ function CellValue({ value, isProCol }) {
 export default function UpgradeModal({ isOpen, onDismissX, onDismissContinue }) {
   const [ctaClicked, setCtaClicked] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -61,9 +72,8 @@ export default function UpgradeModal({ isOpen, onDismissX, onDismissContinue }) 
         </button>
 
         {/* Headline */}
-        <h2 className="text-xl font-bold text-white mb-4">
-          You're putting in the work, Pro keeps up with you.
-        </h2>
+        <h2 className="text-xl font-bold text-white mb-1">You're putting in the work,</h2>
+        <h2 className="text-xl font-bold text-indigo-400 mb-4">Pro keeps up with you.</h2>
 
         {/* Tier comparison table */}
         <div className="rounded-xl overflow-hidden mb-4">
