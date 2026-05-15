@@ -1,31 +1,56 @@
 import { useState } from "react";
 
 const ROWS = [
-  { label: "Sessions per day",        free: "3",            pro: "Unlimited" },
-  { label: "Full debrief + AI scoring", free: "✅",          pro: "✅" },
-  { label: "Audio metrics",           free: "✅",            pro: "✅" },
-  { label: "Session history",         free: "Last 3",       pro: "Full history" },
-  { label: "Weakness tracking",       free: "—",            pro: "✅ Coming soon" },
-  { label: "PDF export",              free: "—",            pro: "✅ Coming soon" },
-  { label: "Eye contact scoring",     free: "—",            pro: "✅ Coming soon" },
+  { label: "Sessions per day",          free: "3",          pro: "Unlimited" },
+  { label: "Full debrief + AI scoring", free: "check",      pro: "check" },
+  { label: "Audio metrics",             free: "check",      pro: "check" },
+  { label: "Session history",           free: "Last 3",     pro: "Full history" },
+  { label: "Weakness tracking",         free: "—",          pro: "soon" },
+  { label: "PDF export",                free: "—",          pro: "soon" },
+  { label: "Eye contact scoring",       free: "—",          pro: "soon" },
 ];
 
-export default function UpgradeModal({ isOpen, onDismiss }) {
+function CheckIcon({ color }) {
+  return (
+    <svg
+      className={`w-4 h-4 inline ${color}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
+
+function CellValue({ value, isProCol }) {
+  if (value === "check") {
+    return <CheckIcon color={isProCol ? "text-indigo-400" : "text-gray-400"} />;
+  }
+  if (value === "soon") {
+    return <span className="text-gray-500 text-xs">Coming soon</span>;
+  }
+  // Text values: pro column gets indigo when it differs from free
+  return <span>{value}</span>;
+}
+
+export default function UpgradeModal({ isOpen, onDismissX, onDismissContinue }) {
   const [ctaClicked, setCtaClicked] = useState(false);
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 bg-black/60"
-      onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60"
+      onClick={(e) => { if (e.target === e.currentTarget) onDismissX(); }}
     >
-      <div className="bg-gray-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-xl relative">
+      <div className="bg-gray-800 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-xl relative">
 
         {/* X button */}
         <button
           type="button"
-          onClick={onDismiss}
+          onClick={onDismissX}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 transition-colors duration-150"
           aria-label="Close"
         >
@@ -36,29 +61,31 @@ export default function UpgradeModal({ isOpen, onDismiss }) {
         </button>
 
         {/* Headline */}
-        <p className="text-indigo-400 text-sm font-medium mb-2">Session Complete</p>
-        <h2 className="text-2xl font-bold text-white mb-1">You're putting in the work.</h2>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-6">Pro keeps up with you.</h2>
+        <h2 className="text-xl font-bold text-white mb-4">
+          You're putting in the work, Pro keeps up with you.
+        </h2>
 
         {/* Tier comparison table */}
-        <div className="rounded-xl overflow-hidden mb-6">
+        <div className="rounded-xl overflow-hidden mb-4">
           {/* Header row */}
           <div className="grid grid-cols-3 bg-gray-700/50 py-2 px-4">
             <div />
-            <div className="text-center text-sm font-medium text-gray-300">Free</div>
-            <div className="text-center text-sm font-medium text-indigo-400">Pro</div>
+            <div className="text-center text-xs font-medium text-gray-300">Free</div>
+            <div className="text-center text-xs font-medium text-indigo-400">Pro</div>
           </div>
 
           {/* Data rows */}
           {ROWS.map((row, i) => (
             <div
               key={row.label}
-              className={`grid grid-cols-3 py-3 px-4 ${i % 2 === 0 ? "bg-transparent" : "bg-gray-700/50"}`}
+              className={`grid grid-cols-3 py-2 px-4 ${i % 2 === 0 ? "bg-transparent" : "bg-gray-700/50"}`}
             >
-              <div className="text-sm text-white">{row.label}</div>
-              <div className="text-center text-sm text-gray-300">{row.free}</div>
-              <div className={`text-center text-sm ${row.pro === row.free ? "text-gray-300" : "text-indigo-400"}`}>
-                {row.pro}
+              <div className="text-xs text-white">{row.label}</div>
+              <div className="text-center text-xs text-gray-300">
+                <CellValue value={row.free} isProCol={false} />
+              </div>
+              <div className={`text-center text-xs ${row.pro !== row.free && row.pro !== "check" && row.pro !== "soon" ? "text-indigo-400" : "text-gray-300"}`}>
+                <CellValue value={row.pro} isProCol={true} />
               </div>
             </div>
           ))}
@@ -68,7 +95,7 @@ export default function UpgradeModal({ isOpen, onDismiss }) {
         <button
           type="button"
           onClick={() => setCtaClicked(true)}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-colors duration-150 mt-6"
+          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-colors duration-150 mt-2"
         >
           Get Pro — $7.99/month
         </button>
@@ -81,7 +108,7 @@ export default function UpgradeModal({ isOpen, onDismiss }) {
 
         {/* Dismiss link */}
         <p
-          onClick={onDismiss}
+          onClick={onDismissContinue}
           className="text-gray-400 text-sm text-center mt-4 cursor-pointer hover:text-gray-300 transition-colors duration-150"
         >
           Continue with Free →

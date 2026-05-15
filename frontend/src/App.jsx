@@ -23,7 +23,7 @@ function AppInner() {
   const [debriefData, setDebriefData] = useState(null);
   const [viewingSession, setViewingSession] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
 
   const handleSignOut = async () => {
     await signOut();
@@ -175,7 +175,7 @@ function AppInner() {
         onStartNew={() => setPage("home")}
         onSignOut={handleSignOut}
         onViewAll={() => setPage("session_history")}
-        showUpgradeBanner={showUpgradeBanner}
+        showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
         onUpgradeClick={() => setShowUpgradeModal(true)}
         onDismissBanner={() => setShowUpgradeBanner(false)}
         onViewSession={async (session) => {
@@ -237,10 +237,15 @@ function AppInner() {
     <>
       <UpgradeModal
         isOpen={showUpgradeModal}
-        onDismiss={() => {
+        onDismissX={() => {
+          setShowUpgradeModal(false);
+          setShowUpgradeBanner(false);
+          if (page === "debrief") setPage("home");
+        }}
+        onDismissContinue={() => {
           setShowUpgradeModal(false);
           setShowUpgradeBanner(true);
-          setPage("home");
+          if (page === "debrief") setPage("home");
         }}
       />
       <JobInputPage
@@ -250,7 +255,7 @@ function AppInner() {
         }}
         onSignOut={handleSignOut}
         onGoToAccount={() => setPage("account_home")}
-        showUpgradeBanner={showUpgradeBanner}
+        showUpgradeBanner={showUpgradeBanner && !showUpgradeModal}
         onUpgradeClick={() => setShowUpgradeModal(true)}
         onDismissBanner={() => setShowUpgradeBanner(false)}
       />
