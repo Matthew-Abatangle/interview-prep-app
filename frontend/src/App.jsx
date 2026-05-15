@@ -12,6 +12,8 @@ import RecordingPage from "./pages/RecordingPage";
 import DebriefPage from "./pages/DebriefPage";
 import AccountHomePage from "./pages/AccountHomePage";
 import SessionHistoryPage from "./pages/SessionHistoryPage";
+import UpgradeModal from "./components/UpgradeModal";
+import UpgradeBanner from "./components/UpgradeBanner";
 
 function AppInner() {
   const { user, loading, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
@@ -20,6 +22,8 @@ function AppInner() {
   const [mediaStream, setMediaStream] = useState(null);
   const [debriefData, setDebriefData] = useState(null);
   const [viewingSession, setViewingSession] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -96,7 +100,7 @@ function AppInner() {
           setDebriefData(null);
           setSessionData(null);
           setMediaStream(null);
-          setPage("home");
+          setShowUpgradeModal(true);
         }}
         onGoToAccount={() => {
           setDebriefData(null);
@@ -171,6 +175,9 @@ function AppInner() {
         onStartNew={() => setPage("home")}
         onSignOut={handleSignOut}
         onViewAll={() => setPage("session_history")}
+        showUpgradeBanner={showUpgradeBanner}
+        onUpgradeClick={() => setShowUpgradeModal(true)}
+        onDismissBanner={() => setShowUpgradeBanner(false)}
         onViewSession={async (session) => {
           try {
             const { data: { session: authSession } } = await (await import("./lib/supabaseClient")).supabase.auth.getSession();
@@ -227,14 +234,27 @@ function AppInner() {
 
   // Default authenticated view — JobInputPage
   return (
-    <JobInputPage
-      onSuccess={(data) => {
-        setSessionData({ ...data, feedback_timing: "live" });
-        setPage("questions_ready");
-      }}
-      onSignOut={handleSignOut}
-      onGoToAccount={() => setPage("account_home")}
-    />
+    <>
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onDismiss={() => {
+          setShowUpgradeModal(false);
+          setShowUpgradeBanner(true);
+          setPage("home");
+        }}
+      />
+      <JobInputPage
+        onSuccess={(data) => {
+          setSessionData({ ...data, feedback_timing: "live" });
+          setPage("questions_ready");
+        }}
+        onSignOut={handleSignOut}
+        onGoToAccount={() => setPage("account_home")}
+        showUpgradeBanner={showUpgradeBanner}
+        onUpgradeClick={() => setShowUpgradeModal(true)}
+        onDismissBanner={() => setShowUpgradeBanner(false)}
+      />
+    </>
   );
 }
 

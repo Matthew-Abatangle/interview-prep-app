@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import UpgradeBanner from "../components/UpgradeBanner";
 
 const PRESET_ROLES = [
   { value: "software-engineering-intern", label: "Software Engineering Intern" },
@@ -28,7 +29,7 @@ function extractCompanyName(jd) {
   return null;
 }
 
-export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
+export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount, showUpgradeBanner, onUpgradeClick, onDismissBanner }) {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [presetRole, setPresetRole] = useState("");
@@ -167,7 +168,7 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
         </div>
       </div>
 
-      <div className="flex items-start justify-center px-4 py-16">
+      <div className="flex items-start justify-center px-4 py-16 pb-20">
       <div className="w-full max-w-2xl animate-fade-up">
         {/* Header */}
         <div className="mb-10 text-center">
@@ -293,6 +294,9 @@ export default function JobInputPage({ onSuccess, onSignOut, onGoToAccount }) {
         </form>
       </div>
       </div>
+      {showUpgradeBanner && (
+        <UpgradeBanner onUpgradeClick={onUpgradeClick} onDismiss={onDismissBanner} />
+      )}
     </div>
   );
 }

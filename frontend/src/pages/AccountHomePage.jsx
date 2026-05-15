@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
+import UpgradeBanner from "../components/UpgradeBanner";
 
 function StatCard({ label, value, sub }) {
   return (
@@ -106,7 +107,7 @@ function SessionRow({ session, onClick }) {
   );
 }
 
-export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, onSignOut }) {
+export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, onSignOut, showUpgradeBanner, onUpgradeClick, onDismissBanner }) {
   const [sessions, setSessions] = useState([]);
   const [todayCount, setTodayCount] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,7 +171,7 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
         </div>
       </div>
 
-      <div className="flex items-start justify-center px-4 py-16">
+      <div className="flex items-start justify-center px-4 py-16 pb-20">
       <div className="w-full max-w-2xl animate-fade-up space-y-8">
 
         {/* Header */}
@@ -247,6 +248,9 @@ export default function AccountHomePage({ onStartNew, onViewSession, onViewAll, 
         )}
       </div>
       </div>
+      {showUpgradeBanner && (
+        <UpgradeBanner onUpgradeClick={onUpgradeClick} onDismiss={onDismissBanner} />
+      )}
     </div>
   );
 }
