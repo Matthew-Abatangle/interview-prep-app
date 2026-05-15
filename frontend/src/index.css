@@ -132,3 +132,7 @@ html, body {
   background-color: #0f172a; /* slate-900 */
   min-height: 100vh;
 }
+
+html {
+  background-color: #111827; /* gray-900 — matches app bg, prevents overscroll color flash */
+}
