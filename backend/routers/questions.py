@@ -255,6 +255,16 @@ async def generate_questions(http_request: Request, request: GenerateQuestionsRe
             detail="You've reached your daily question generation limit. Try again tomorrow."
         )
 
+    # Log this generation in the dedicated tracking table.
+    # Must happen after the rate limit check passes and before the LLM call.
+    # Non-blocking — a write failure does not prevent question generation.
+    try:
+        get_supabase().table("question_generations").insert({
+            "user_id": user["sub"]
+        }).execute()
+    except Exception as e:
+        print(f"[WARNING] Failed to log question generation: {e}")
+
     # Input validation
     job_title = request.job_title.strip()
     if not job_title:
