@@ -100,7 +100,7 @@ export default function PreInterviewPage({ session_id, feedback_timing, mediaStr
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-start justify-center px-4 py-12">
+    <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-12">
       <div className="w-full max-w-2xl animate-fade-up">
         <h1 className="text-3xl font-bold text-white mb-2">Ready to Begin?</h1>
         <p className="text-slate-400 text-base mb-8">

@@ -258,7 +258,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   // ── PREP ────────────────────────────────────────────────────────────────────
   if (phase === "prep") {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-start justify-center px-4 py-12">
+      <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-12">
         <div className={`w-full max-w-2xl ${qIndex === 0 ? "animate-fade-up" : ""}`}>
           <div className="flex items-center justify-between mb-6">
             <p className="text-slate-400 text-sm">Question {qIndex + 1} of 5</p>
@@ -289,7 +289,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   if (phase === "recording") {
     const progress = Math.min((recordSeconds / 120) * 100, 100);
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-start justify-center px-4 py-12">
+      <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-12">
         <div className="w-full max-w-2xl">
           <div className="flex items-center justify-between mb-6">
             <p className="text-slate-400 text-sm">Question {qIndex + 1} of 5</p>
@@ -335,7 +335,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   // ── PROCESSING ───────────────────────────────────────────────────────────────
   if (phase === "processing") {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
           <p className="text-white font-semibold text-lg mb-2">Analyzing your answer…</p>
@@ -351,7 +351,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
     const isLastQuestion = qIndex >= 4;
     const isLive = feedback_timing === "live";
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-start justify-center px-4 py-12">
+      <div className="min-h-screen bg-gray-900 text-white flex items-start justify-center px-4 py-12">
         <div className="w-full max-w-2xl">
           <p className="text-slate-400 text-sm mb-6">Question {qIndex + 1} of 5 — Feedback</p>
 
@@ -515,7 +515,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
   if (phase === "debrief_trigger") {
     if (debriefError) {
       return (
-        <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-4">
+        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
           <div className="text-center max-w-sm">
             <p className="text-red-400 font-medium mb-6">{debriefError}</p>
             <button
@@ -531,7 +531,7 @@ export default function RecordingPage({ session_id, questions, feedback_timing, 
     }
 
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
           <p className="text-white font-semibold text-lg mb-2">Generating your debrief…</p>

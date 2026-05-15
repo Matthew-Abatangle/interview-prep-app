@@ -178,7 +178,7 @@ export default function DebriefPage({ debriefData, session_id, sessionSource, se
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -216,7 +216,7 @@ export default function DebriefPage({ debriefData, session_id, sessionSource, se
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white px-4 py-12">
+    <div className="min-h-screen bg-gray-900 text-white px-4 py-12">
       <div className="w-full max-w-2xl mx-auto animate-fade-up">
 
         <h1 className="text-2xl font-bold text-white mb-8">Your Debrief</h1>

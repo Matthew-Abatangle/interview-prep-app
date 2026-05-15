@@ -14,7 +14,7 @@ export default function PermissionPage({ onGranted }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md animate-fade-up text-center">
         <div className="text-5xl mb-6">🎙️</div>
         <h1 className="text-3xl font-bold text-white mb-4">Camera & Mic Access</h1>
